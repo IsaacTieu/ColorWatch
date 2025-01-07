@@ -4,7 +4,7 @@
 # If the webcam is connected to USB port on the right side, the parameter is '2'.
 # The script takes a while to run since VideoCapture is being run multiple times.
 
-
+import cv2
 device_list = []
 for i in range(5):
     cap = cv2.VideoCapture(i)
