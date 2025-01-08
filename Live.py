@@ -2,14 +2,18 @@
 # Adjust the parameter of cv2.VideoCapture() if the script is outputting the wrong camera.
 import cv2
 import numpy as np
+import pandas as pd
 
 # The script in CheckCameras.py finds what number input to cv2.VideoCapture
-vid = cv2.VideoCapture(2)
+vid = cv2.VideoCapture(1)
 codec = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
 
 fps = vid.get(cv2.CAP_PROP_FPS)
+print(fps)
 width  = vid.get(cv2.CAP_PROP_FRAME_WIDTH)   # float
 height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
+
+colors = []
 
 # 'rxn.avi' can be renamed
 #out = cv2.VideoWriter('rxn.avi', codec, fps, (int(width), int(height)))
@@ -64,13 +68,12 @@ while True:
     average_green = np.mean(greens)
     average_blue = np.mean(blues)
 
-    export_list = [average_red, average_green, average_blue]
-
-
+    frame_average_color = [average_red, average_green, average_blue]
+    colors.append(frame_average_color)
 
     cv2.imshow("Live webcam video", frame)
 
-
+    # Press the video and then 'q' to quit and export the color data
     cv2.waitKey(1)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
@@ -78,6 +81,15 @@ while True:
 # vid.release()
 # out.release()
 cv2.destroyAllWindows()
+
+df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue'])
+
+# Can rename 'colorData'
+# This webcam is 30 FPS, which means that each second gives 30 rows of color data
+df.to_csv('colorData.csv', index=False)
+
+
+
 
 
 
