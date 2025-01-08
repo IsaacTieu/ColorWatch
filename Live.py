@@ -3,6 +3,7 @@
 import cv2
 import numpy as np
 import pandas as pd
+import datetime
 
 user_input = input("Enter a rapid RGB value change as an integer: ")
 
@@ -24,6 +25,8 @@ warning = False
 warning_counter = 0
 font = cv2.FONT_HERSHEY_SIMPLEX
 
+color_change_data = []
+
 # 'rxn.avi' can be renamed
 #out = cv2.VideoWriter('rxn.avi', codec, fps, (int(width), int(height)))
 
@@ -38,14 +41,14 @@ while True:
         frame_counter = 0
         test_color = colors[-1]
         color_diff = [abs(x - y) for x, y in zip(test_color, prev_color)]
-        #user input for color change = _
         for num in color_diff:
             if int(num) >= int(user_input):
                 warning = True
                 warning_counter = 0
+                current_time = datetime.datetime.now()
+                color_change_data.append([current_time, color_diff[0], color_diff[1], color_diff[2]])
 
 
-    print(warning)
     if warning == True:
         frame = cv2.putText(frame, 'RAPID COLOR CHANGE DETECTED',
                             (width // 2 - width // 6, height // 2 - height // 6), font, 2,
@@ -108,7 +111,7 @@ while True:
 
     cv2.imshow("Live webcam video", frame)
 
-    # Press the video and then 'q' to quit and export the color data
+    # Press the video window and then 'q' to quit and export the color data
     cv2.waitKey(1)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
@@ -117,11 +120,16 @@ while True:
 # out.release()
 cv2.destroyAllWindows()
 
-df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue'])
+color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue'])
+color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date / HH:MM:SS', 'Red Difference',
+                                                           'Green Difference', 'Blue Difference'])
+
 
 # Can rename 'colorData'
 # This webcam is 30 FPS, which means that each second gives 30 rows of color data
-df.to_csv('colorData.csv', index=False)
+color_df.to_csv('colorData.csv', index=False)
+# Can rename 'colorChangeData'
+color_change_df.to_csv('colorChangeData.csv', index=False)
 
 
 
