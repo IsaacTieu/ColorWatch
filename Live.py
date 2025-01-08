@@ -8,8 +8,8 @@ import datetime
 user_input = input("Enter a rapid RGB value change as an integer: ")
 
 # The script in CheckCameras.py finds what possible numbers to input to cv2.VideoCapture
-vid = cv2.VideoCapture(1)
-codec = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
+vid = cv2.VideoCapture(0)
+codec = cv2.VideoWriter_fourcc(*'XVID')
 
 fps = vid.get(cv2.CAP_PROP_FPS)
 width  = vid.get(cv2.CAP_PROP_FRAME_WIDTH)   # float
@@ -28,13 +28,16 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 color_change_data = []
 
 # 'rxn.avi' can be renamed
-#out = cv2.VideoWriter('rxn.avi', codec, fps, (int(width), int(height)))
+out = cv2.VideoWriter('rxn.avi', codec, fps, (width, height))
 
 while True:
     bool, frame = vid.read()
 
+    # This section detects rapid changes in color and displays a warning sign based on user input
+
     if frame_counter == 1:
         prev_color = colors[-1]
+    # The warning sign will be on for 90 frames (3 seconds).
     if warning_counter == 90:
         warning = False
     if frame_counter == 31:
@@ -111,13 +114,15 @@ while True:
 
     cv2.imshow("Live webcam video", frame)
 
+    out.write(frame)
+
     # Press the video window and then 'q' to quit and export the color data
     cv2.waitKey(1)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-# vid.release()
-# out.release()
+vid.release()
+out.release()
 cv2.destroyAllWindows()
 
 color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue'])
