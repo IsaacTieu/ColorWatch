@@ -4,16 +4,25 @@ import cv2
 import numpy as np
 import pandas as pd
 
-# The script in CheckCameras.py finds what number input to cv2.VideoCapture
+user_input = input("Enter a rapid RGB value change as an integer: ")
+
+# The script in CheckCameras.py finds what possible numbers to input to cv2.VideoCapture
 vid = cv2.VideoCapture(1)
 codec = cv2.VideoWriter_fourcc('M', 'J', 'P', 'G')
 
 fps = vid.get(cv2.CAP_PROP_FPS)
-print(fps)
 width  = vid.get(cv2.CAP_PROP_FRAME_WIDTH)   # float
 height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
+width = int(width)
+height = int(height)
 
 colors = []
+
+frame_counter = 0
+prev_color = None
+warning = False
+warning_counter = 0
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 # 'rxn.avi' can be renamed
 #out = cv2.VideoWriter('rxn.avi', codec, fps, (int(width), int(height)))
@@ -21,13 +30,36 @@ colors = []
 while True:
     bool, frame = vid.read()
 
+    if frame_counter == 1:
+        prev_color = colors[-1]
+    if warning_counter == 90:
+        warning = False
+    if frame_counter == 31:
+        frame_counter = 0
+        test_color = colors[-1]
+        color_diff = [abs(x - y) for x, y in zip(test_color, prev_color)]
+        #user input for color change = _
+        for num in color_diff:
+            if int(num) >= int(user_input):
+                warning = True
+                warning_counter = 0
+
+
+    print(warning)
+    if warning == True:
+        frame = cv2.putText(frame, 'RAPID COLOR CHANGE DETECTED',
+                            (width // 2 - width // 6, height // 2 - height // 6), font, 2,
+                            (255, 0, 0), 3)
+
+
+
+
+
     # Properties of the square on the image
     # start is the top left corner coordinates
     # end is the bottom right corner coordinates
     # (0, 0) is the top left of the image
 
-    width = int(width)
-    height = int(height)
     half_length = width // 6
     start = (width // 2 - half_length, height // 2 - half_length)
     end = (width // 2 + half_length, height // 2 + half_length)
@@ -55,7 +87,7 @@ while True:
     # print("STOPTOPTOPTOPTOPTOTPOT")
 
 
-    #need to double check if these are the correct ranges
+    #need to double check if these are the correct ranges!!!
     for r in range(start[1] + thickness, end[1] - start[1]):
         for c in range(start[1] + thickness, end[0] - start[0]):
             pixel = frame[r][c] # List of the 3 RGB values
@@ -70,6 +102,9 @@ while True:
 
     frame_average_color = [average_red, average_green, average_blue]
     colors.append(frame_average_color)
+
+    frame_counter += 1
+    warning_counter += 1
 
     cv2.imshow("Live webcam video", frame)
 
@@ -108,3 +143,8 @@ df.to_csv('colorData.csv', index=False)
     #remember that there are outliers here (buffer at the start vs end)
     #write some failsafes for that or maybe add a manual feature for the start and end time
     #i don't like the idea of a manual feature because there is human error
+    #monitor for spike in color change
+    # remove noise
+    #user defined threshold when the rate of change is at a certain amount
+    # alert on webcam
+    #clock time for rapid color change
