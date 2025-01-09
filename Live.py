@@ -1,15 +1,18 @@
 # Run this to start the live webcam footage.
 # This script may take some time to run (30 seconds - 1 minute) because of the cv2.VideoCapture function.
+# If there is previous data from a prior run in the current working directory, make sure to move it to another folder.
+# This includes '.avi' and '.csv' files.
 import cv2
 import numpy as np
 import pandas as pd
 import datetime
+import os
 
-user_input = input("Enter a rapid RGB value change as an integer: ")
+user_input = input("Enter the RGB value change to detect as an integer: ")
 
 # The script in CheckCameras.py finds what possible numbers to input to cv2.VideoCapture.
 # Adjust the parameter of cv2.VideoCapture() if the script is outputting the wrong camera.
-# This is very finnicky since openCV doesn't give information about what number correlates to what camera.
+# This is very finicky since openCV doesn't give information about what number correlates to what camera.
 # There will be a lot of trial and error figuring out the right camera, because the number can hop around.
 vid = cv2.VideoCapture(1)
 codec = cv2.VideoWriter_fourcc(*'XVID')
@@ -21,7 +24,7 @@ width = int(width)
 height = int(height)
 
 colors = []
-color_change_data = set()
+color_change_data = []
 colors_per_second = []
 
 frame_counter = 0
@@ -54,11 +57,11 @@ while True:
                 current_time = datetime.datetime.now()
                 data = (current_time, color_diff[0], color_diff[1], color_diff[2],
                                           len(colors) + 1, len(colors_per_second) + 1)
-                color_change_data.add(data)
+                color_change_data.append(data)
                 break
 
     # If a color change is detected, a warning message is displayed.
-    if warning == True:
+    if warning:
         text = 'RAPID COLOR CHANGE DETECTED'
         (text_width, text_height), _ = cv2.getTextSize(text, font, 1, 3)
         x = (width - text_width) // 2
@@ -80,12 +83,7 @@ while True:
 
     frame = cv2.rectangle(frame, start, end, color, thickness)
 
-    # Finds the average of all the pixel values in the square for one frame
-    # top_left = start
-    # top_right = (end[0], start[1])
-    # bottom_left = (start[0], end[1])
-    # bottom_right = end
-
+    # This finds the average of all the pixel values in the square for one frame
     reds = []
     greens = []
     blues = []
@@ -114,9 +112,9 @@ while True:
     out.write(frame)
 
     # Press the video window and then 'q' to quit and export the color data
-    # MAKE SURE NUMLOCK IS TURNED OFF
-    cv2.waitKey(1)
-    if cv2.waitKey(1) & 0xFF == ord('q'):
+    # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
+    key = cv2.waitKey(1)
+    if key & 0xFF == ord('q'):
         break
 
 vid.release()
@@ -125,8 +123,6 @@ cv2.destroyAllWindows()
 
 color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue'])
 colors_per_second_df = pd.DataFrame(colors_per_second, columns=['Red', 'Green', 'Blue'])
-
-color_change_data = list(color_change_data)
 color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date / HH:MM:SS',
                                                            'Red Difference',
                                                            'Green Difference',
@@ -134,21 +130,31 @@ color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date /
                                                            'Color Table Row Number',
                                                            'Colors per Second Table Row Number'])
 
+
+def file_check(file_path, dataframe, file_name):
+    if os.path.exists(file_path):
+        yes = input(f"Enter 'yes' to continue after you have moved '{file_path}' to another folder. "
+                    f"If not moved, the current file will be overwritten. \n"
+                    f"If something else is entered, the old file will stay and the current file will be lost: ")
+        possible_inputs = ['yes', ' yes', 'yes ', 'YES', ' YES', 'YES ']
+        if yes in possible_inputs:
+            dataframe.to_csv(file_name, mode='w', index=False)
+
+
 # This webcam is 30 FPS, which means that each second gives 30 rows of color data
 # Can rename 'colorData'. This is the table of all the RGB values throughout the reaction.
-color_df.to_csv('colorData.csv', index=False)
+file_check('colorData.csv', color_df, 'colorData.csv')
 
 # Can rename 'colorsPerSecondData'. This is the table of the RGB values at each second to shorten Excel.
-colors_per_second_df.to_csv('colorsPerSecondData.csv', index=False)
+file_check('colorsPerSecondData.csv', colors_per_second_df, 'colorsPerSecondData.csv')
 
 # Can rename 'colorChangeData'. This is the data for when a color change is detected.
-color_change_df.to_csv('colorChangeData.csv', index=False)
+file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
 
 # All of these files are saved into the current working directory (CWD).
-# When the script is run again, these files will get replaced.
 # Make sure to transfer the data files somewhere else if it needs to be referenced later.
 
-# implement file saving failsafe
+
 
 
 
