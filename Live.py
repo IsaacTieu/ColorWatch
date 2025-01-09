@@ -1,5 +1,5 @@
 # Run this to start the live webcam footage.
-# Adjust the parameter of cv2.VideoCapture() if the script is outputting the wrong camera.
+# This script may take some time to run (30 seconds - 1 minute) because of the cv2.VideoCapture function.
 import cv2
 import numpy as np
 import pandas as pd
@@ -7,8 +7,11 @@ import datetime
 
 user_input = input("Enter a rapid RGB value change as an integer: ")
 
-# The script in CheckCameras.py finds what possible numbers to input to cv2.VideoCapture
-vid = cv2.VideoCapture(0)
+# The script in CheckCameras.py finds what possible numbers to input to cv2.VideoCapture.
+# Adjust the parameter of cv2.VideoCapture() if the script is outputting the wrong camera.
+# This is very finnicky since openCV doesn't give information about what number correlates to what camera.
+# There will be a lot of trial and error figuring out the right camera, because the number can hop around.
+vid = cv2.VideoCapture(1)
 codec = cv2.VideoWriter_fourcc(*'XVID')
 
 fps = vid.get(cv2.CAP_PROP_FPS)
@@ -18,28 +21,27 @@ width = int(width)
 height = int(height)
 
 colors = []
-
-frame_counter = 0
-prev_color = None
-warning = False
-warning_counter = 0
-font = cv2.FONT_HERSHEY_SIMPLEX
-
 color_change_data = []
 
-# 'rxn.avi' can be renamed
+frame_counter = 0
+warning_counter = 0
+prev_color = None
+warning = False
+font = cv2.FONT_HERSHEY_SIMPLEX
+
+# 'rxn.avi' can be renamed. This is the video of the reaction.
 out = cv2.VideoWriter('rxn.avi', codec, fps, (width, height))
 
 while True:
-    bool, frame = vid.read()
+    _, frame = vid.read()
 
-    # This section detects rapid changes in color and displays a warning sign based on user input
-
+    # This section detects change in color based on user input and displays a warning sign.
     if frame_counter == 1:
         prev_color = colors[-1]
     # The warning sign will be on for 90 frames (3 seconds).
     if warning_counter == 90:
         warning = False
+    # Checks for color change every 31st frame (approximately every second) and then resets.
     if frame_counter == 31:
         frame_counter = 0
         test_color = colors[-1]
@@ -49,22 +51,23 @@ while True:
                 warning = True
                 warning_counter = 0
                 current_time = datetime.datetime.now()
-                color_change_data.append([current_time, color_diff[0], color_diff[1], color_diff[2]])
+                color_change_data.append([current_time, color_diff[0], color_diff[1], color_diff[2],
+                                          len(colors) - 1])
 
-
+    # If a color change is detected, a warning message is displayed.
     if warning == True:
-        frame = cv2.putText(frame, 'RAPID COLOR CHANGE DETECTED',
-                            (width // 2 - width // 6, height // 2 - height // 6), font, 2,
+        text = 'RAPID COLOR CHANGE DETECTED'
+        (text_width, text_height), _ = cv2.getTextSize(text, font, 1, 3)
+        x = (width - text_width) // 2
+        y = height // 8 + text_height // 2
+        frame = cv2.putText(frame, text, (x, y), font, 1,
                             (255, 0, 0), 3)
 
-
-
-
-
-    # Properties of the square on the image
+    # These are the properties of the square on the image.
     # start is the top left corner coordinates
     # end is the bottom right corner coordinates
     # (0, 0) is the top left of the image
+    # In the case of the webcam, start = (214, 134); end = (426, 346)
 
     half_length = width // 6
     start = (width // 2 - half_length, height // 2 - half_length)
@@ -75,32 +78,21 @@ while True:
     frame = cv2.rectangle(frame, start, end, color, thickness)
 
     # Finds the average of all the pixel values in the square for one frame
-
-    top_left = start
-    top_right = (end[0], start[1])
-    bottom_left = (start[0], end[1])
-    bottom_right = end
+    # top_left = start
+    # top_right = (end[0], start[1])
+    # bottom_left = (start[0], end[1])
+    # bottom_right = end
 
     reds = []
     greens = []
     blues = []
-    #print(frame[start[0] + 50][end[0] + 50])
 
-    # print(start[0] + thickness)
-    # print(end[1] - start[1])
-    # print(start[1] + thickness)
-    # print(end[0] - start[0])
-    # print("STOPTOPTOPTOPTOPTOTPOT")
-
-
-    #need to double check if these are the correct ranges!!!
-    for r in range(start[1] + thickness, end[1] - start[1]):
-        for c in range(start[1] + thickness, end[0] - start[0]):
+    for r in range(start[1] + thickness, end[1] - thickness):
+        for c in range(start[0] + thickness, end[0] - thickness):
             pixel = frame[r][c] # List of the 3 RGB values
             reds.append(pixel[0])
             greens.append(pixel[1])
             blues.append(pixel[2])
-
 
     average_red = np.mean(reds)
     average_green = np.mean(greens)
@@ -113,7 +105,6 @@ while True:
     warning_counter += 1
 
     cv2.imshow("Live webcam video", frame)
-
     out.write(frame)
 
     # Press the video window and then 'q' to quit and export the color data
@@ -127,14 +118,19 @@ cv2.destroyAllWindows()
 
 color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue'])
 color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date / HH:MM:SS', 'Red Difference',
-                                                           'Green Difference', 'Blue Difference'])
+                                                           'Green Difference', 'Blue Difference',
+                                                           'Color Table Row Number'])
 
-
-# Can rename 'colorData'
 # This webcam is 30 FPS, which means that each second gives 30 rows of color data
+# Can rename 'colorData'. This is the table of all the RGB values throughout the reaction.
 color_df.to_csv('colorData.csv', index=False)
-# Can rename 'colorChangeData'
+
+# Can rename 'colorChangeData'. This is the data for when a color change is detected.
 color_change_df.to_csv('colorChangeData.csv', index=False)
+
+# All of these files are saved into the current working directory (CWD).
+# When the script is run again, these files will get replaced.
+# Make sure to transfer the data files somewhere else if it needs to be referenced later.
 
 
 
@@ -161,3 +157,4 @@ color_change_df.to_csv('colorChangeData.csv', index=False)
     #user defined threshold when the rate of change is at a certain amount
     # alert on webcam
     #clock time for rapid color change
+    # I need to experiment and have an idea of what constitutes a worthy color change
