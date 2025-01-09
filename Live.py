@@ -21,7 +21,8 @@ width = int(width)
 height = int(height)
 
 colors = []
-color_change_data = []
+color_change_data = set()
+colors_per_second = []
 
 frame_counter = 0
 warning_counter = 0
@@ -51,8 +52,10 @@ while True:
                 warning = True
                 warning_counter = 0
                 current_time = datetime.datetime.now()
-                color_change_data.append([current_time, color_diff[0], color_diff[1], color_diff[2],
-                                          len(colors) - 1])
+                data = (current_time, color_diff[0], color_diff[1], color_diff[2],
+                                          len(colors) + 1, len(colors_per_second) + 1)
+                color_change_data.add(data)
+                break
 
     # If a color change is detected, a warning message is displayed.
     if warning == True:
@@ -104,10 +107,14 @@ while True:
     frame_counter += 1
     warning_counter += 1
 
+    if frame_counter == 30:
+        colors_per_second.append(frame_average_color)
+
     cv2.imshow("Live webcam video", frame)
     out.write(frame)
 
     # Press the video window and then 'q' to quit and export the color data
+    # MAKE SURE NUMLOCK IS TURNED OFF
     cv2.waitKey(1)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
@@ -117,13 +124,22 @@ out.release()
 cv2.destroyAllWindows()
 
 color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue'])
-color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date / HH:MM:SS', 'Red Difference',
-                                                           'Green Difference', 'Blue Difference',
-                                                           'Color Table Row Number'])
+colors_per_second_df = pd.DataFrame(colors_per_second, columns=['Red', 'Green', 'Blue'])
+
+color_change_data = list(color_change_data)
+color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date / HH:MM:SS',
+                                                           'Red Difference',
+                                                           'Green Difference',
+                                                           'Blue Difference',
+                                                           'Color Table Row Number',
+                                                           'Colors per Second Table Row Number'])
 
 # This webcam is 30 FPS, which means that each second gives 30 rows of color data
 # Can rename 'colorData'. This is the table of all the RGB values throughout the reaction.
 color_df.to_csv('colorData.csv', index=False)
+
+# Can rename 'colorsPerSecondData'. This is the table of the RGB values at each second to shorten Excel.
+colors_per_second_df.to_csv('colorsPerSecondData.csv', index=False)
 
 # Can rename 'colorChangeData'. This is the data for when a color change is detected.
 color_change_df.to_csv('colorChangeData.csv', index=False)
@@ -131,6 +147,8 @@ color_change_df.to_csv('colorChangeData.csv', index=False)
 # All of these files are saved into the current working directory (CWD).
 # When the script is run again, these files will get replaced.
 # Make sure to transfer the data files somewhere else if it needs to be referenced later.
+
+# implement file saving failsafe
 
 
 
