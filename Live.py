@@ -54,7 +54,7 @@ while True:
         test_color = colors[-1]
         color_diff = [abs(x - y) for x, y in zip(test_color, prev_color)] #[r, g, b]
         for i in range(len(color_diff)):
-            if int(color_diff[i]) >= int(user_inputs[i]):
+            if int(color_diff[i]) > int(user_inputs[i]):
                 warning = True
                 warning_counter = 0
                 current_time = datetime.datetime.now()
