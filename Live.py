@@ -133,12 +133,17 @@ color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date /
 
 def file_check(file_path, dataframe, file_name):
     if os.path.exists(file_path):
-        yes = input(f"Enter 'yes' to continue after you have moved '{file_path}' to another folder. "
+        first_yes = input(f"Enter 'yes' to continue after you have moved '{file_path}' to another folder. "
                     f"If not moved, the current file will be overwritten. \n"
                     f"If something else is entered, the old file will stay and the current file will be lost: ")
         possible_inputs = ['yes', ' yes', 'yes ', 'YES', ' YES', 'YES ']
-        if yes in possible_inputs:
+        if first_yes in possible_inputs:
             dataframe.to_csv(file_name, mode='w', index=False)
+        else:
+            second_yes = input('Last chance to save the file. Type "yes" to save the file ')
+            if second_yes in possible_inputs:
+                dataframe.to_csv(file_name, mode='w', index=False)
+
 
 
 # This webcam is 30 FPS, which means that each second gives 30 rows of color data
@@ -182,3 +187,4 @@ file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
     # alert on webcam
     #clock time for rapid color change
     # I need to experiment and have an idea of what constitutes a worthy color change
+    #Potential functionality for dividing input changes into red/green/blues values
