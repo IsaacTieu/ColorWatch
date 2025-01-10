@@ -142,11 +142,23 @@ def file_check(file_path, dataframe, file_name):
                     f"If something else is entered, the old file will stay and the current file will be lost: ")
         possible_inputs = ['yes', ' yes', 'yes ', 'YES', ' YES', 'YES ']
         if first_yes in possible_inputs:
-            dataframe.to_csv(file_name, mode='w', index=False)
+            try:
+                dataframe.to_csv(file_name, mode='w', index=False)
+            except PermissionError:
+                error_input = input("There is a permission error happening. Try closing the excel."
+                                    "Type 'yes' once done.")
+                if error_input in possible_inputs:
+                    dataframe.to_csv(file_name, mode='w', index=False)
         else:
             second_yes = input('Last chance to save the file. Type "yes" to save the file ')
             if second_yes in possible_inputs:
-                dataframe.to_csv(file_name, mode='w', index=False)
+                try:
+                    dataframe.to_csv(file_name, mode='w', index=False)
+                except PermissionError:
+                    error_input = input("There is a permission error happening. Try closing the excel."
+                                        "Type 'yes' once done.")
+                    if error_input in possible_inputs:
+                        dataframe.to_csv(file_name, mode='w', index=False)
 
 
 
