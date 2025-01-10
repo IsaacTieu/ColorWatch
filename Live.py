@@ -8,7 +8,10 @@ import pandas as pd
 import datetime
 import os
 
-user_input = input("Enter the RGB value change to detect as an integer: ")
+red_ui = input("Enter the RED value change to detect as an integer: ")
+green_ui = input("Enter the GREEN value change to detect as an integer: ")
+blue_ui = input("Enter the BLUE value change to detect as an integer: ")
+user_inputs = [red_ui, green_ui, blue_ui]
 
 # The script in CheckCameras.py finds what possible numbers to input to cv2.VideoCapture.
 # Adjust the parameter of cv2.VideoCapture() if the script is outputting the wrong camera.
@@ -49,14 +52,14 @@ while True:
     if frame_counter == 31:
         frame_counter = 0
         test_color = colors[-1]
-        color_diff = [abs(x - y) for x, y in zip(test_color, prev_color)]
-        for num in color_diff:
-            if int(num) >= int(user_input):
+        color_diff = [abs(x - y) for x, y in zip(test_color, prev_color)] #[r, g, b]
+        for i in range(len(color_diff)):
+            if int(color_diff[i]) >= int(user_inputs[i]):
                 warning = True
                 warning_counter = 0
                 current_time = datetime.datetime.now()
                 data = (current_time, color_diff[0], color_diff[1], color_diff[2],
-                                          len(colors) + 1, len(colors_per_second) + 1)
+                                          len(colors) + 1, len(colors_per_second) + 1, i)
                 color_change_data.append(data)
                 break
 
@@ -128,7 +131,8 @@ color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date /
                                                            'Green Difference',
                                                            'Blue Difference',
                                                            'Color Table Row Number',
-                                                           'Colors per Second Table Row Number'])
+                                                           'Colors per Second Table Row Number',
+                                                           'Color Detected (red=0, green=1, blue=2)'])
 
 
 def file_check(file_path, dataframe, file_name):
