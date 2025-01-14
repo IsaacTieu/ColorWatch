@@ -8,12 +8,23 @@ import cv2
 import numpy as np
 import pandas as pd
 import datetime
+import av
+import io
+
+# https://stackoverflow.com/questions/73609006/how-to-create-a-video-out-of-frames-without-saving-it-to-disk-using-python
+# Video capturing code taken from here
+
+# The script in CheckCameras.py finds what possible numbers to input to cv2.VideoCapture.
+# Adjust 'camera' if the script is outputting the wrong camera.
+# This is very finicky since openCV doesn't give information about what number correlates to what camera.
+# There will be a lot of trial and error figuring out the right camera, because the number can hop around.
+camera = 0
 
 
 print("Hold down your mouse and move it to select the region of interest")
 print("Press 'q' once finished to move on.")
 
-vid = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+vid = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
 fps = vid.get(cv2.CAP_PROP_FPS)
 width  = vid.get(cv2.CAP_PROP_FRAME_WIDTH)   # float
 height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
@@ -47,12 +58,12 @@ cv2.namedWindow("rectangle")
 cv2.setMouseCallback("rectangle", draw_rectangle)
 
 while True:
-    _, frame = vid.read()
+    _, image = vid.read()
 
     if start and end:
-        frame = cv2.rectangle(frame, start, end, color, thickness)
+        image = cv2.rectangle(image, start, end, color, thickness)
 
-    cv2.imshow("rectangle", frame)
+    cv2.imshow("rectangle", image)
 
     # Press the video window and then 'q' to quit and move on.
     # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
@@ -68,14 +79,10 @@ red_ui = input("Enter the RED value change to detect as an integer: ")
 green_ui = input("Enter the GREEN value change to detect as an integer: ")
 blue_ui = input("Enter the BLUE value change to detect as an integer: ")
 print("Once done taking measurements, press 'q' to save and export the data.")
-user_inputs = [red_ui, green_ui, blue_ui]
+user_inputs = [blue_ui, green_ui, red_ui]
 
-# The script in CheckCameras.py finds what possible numbers to input to cv2.VideoCapture.
-# Adjust the parameter of cv2.VideoCapture() if the script is outputting the wrong camera.
-# This is very finicky since openCV doesn't give information about what number correlates to what camera.
-# There will be a lot of trial and error figuring out the right camera, because the number can hop around.
-vid = cv2.VideoCapture(1, cv2.CAP_DSHOW)
-codec = cv2.VideoWriter_fourcc(*'XVID')
+
+vid = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
 
 colors = []
 color_change_data = []
@@ -87,8 +94,15 @@ prev_color = None
 warning = False
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-# 'rxn.avi' can be renamed. This is the video of the reaction that will be saved.
-out = cv2.VideoWriter('rxn.avi', codec, fps, (width, height))
+output_memory_file = io.BytesIO()
+
+output = av.open(output_memory_file, 'w', format="mp4")
+stream = output.add_stream('h264', int(fps))
+stream.width = width
+stream.height = height
+stream.pix_fmt = 'yuv420p'
+stream.options = {'crf': '17'}  # Lower crf = better quality & more file space.
+
 
 while True:
     _, frame = vid.read()
@@ -103,13 +117,13 @@ while True:
     if frame_counter == 31:
         frame_counter = 0
         test_color = colors[-1]
-        color_diff = [abs(x - y) for x, y in zip(test_color, prev_color)] #[r, g, b]
+        color_diff = [abs(x - y) for x, y in zip(test_color, prev_color)] #[B, G, R]
         for i in range(len(color_diff)):
             if int(color_diff[i]) > int(user_inputs[i]):
                 warning = True
                 warning_counter = 0
                 current_time = datetime.datetime.now()
-                data = (current_time, color_diff[0], color_diff[1], color_diff[2],
+                data = (current_time, color_diff[2], color_diff[1], color_diff[0],
                                           len(colors) + 1, len(colors_per_second) + 1, i)
                 color_change_data.append(data)
                 break
@@ -130,9 +144,6 @@ while True:
     # (0, 0) is the top left of the image
     # In the case of the webcam, start = (214, 134); end = (426, 346)
 
-    # half_length = width // 6
-    # start = (width // 2 - half_length, height // 2 - half_length)
-    # end = (width // 2 + half_length, height // 2 + half_length)
 
     # start and end are determined from the original ROI changer.
     frame = cv2.rectangle(frame, start, end, color, thickness)
@@ -144,10 +155,10 @@ while True:
 
     for r in range(start[1] + thickness, end[1] - thickness):
         for c in range(start[0] + thickness, end[0] - thickness):
-            pixel = frame[r][c] # List of the 3 RGB values
-            reds.append(pixel[0])
+            pixel = frame[r][c] # List of the 3 RGB values as [B, G, R]
+            blues.append(pixel[0])
             greens.append(pixel[1])
-            blues.append(pixel[2])
+            reds.append(pixel[2])
 
     average_red = np.mean(reds)
     average_green = np.mean(greens)
@@ -162,8 +173,13 @@ while True:
     if frame_counter == 30:
         colors_per_second.append(frame_average_color)
 
+
+    image = av.VideoFrame.from_ndarray(frame, format='bgr24')  # Convert image from NumPy Array to frame.
+    packet = stream.encode(image)  # Encode video frame
+    output.mux(packet)  # "Mux" the encoded frame (add the encoded frame to MP4 file).
+
     cv2.imshow("Live webcam video", frame)
-    out.write(frame)
+
 
     # Press the video window and then 'q' to quit and export the color data
     # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
@@ -172,8 +188,14 @@ while True:
         break
 
 vid.release()
-out.release()
+packet = stream.encode(None)
+output.mux(packet)
+output.close()
 cv2.destroyAllWindows()
+
+with open("output.mp4", "wb") as f:
+    f.write(output_memory_file.getbuffer())
+
 
 color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue'])
 colors_per_second_df = pd.DataFrame(colors_per_second, columns=['Red', 'Green', 'Blue'])
@@ -183,7 +205,7 @@ color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date /
                                                            'Blue Difference',
                                                            'Color Table Row Number',
                                                            'Colors per Second Table Row Number',
-                                                           'Color Detected (red=0, green=1, blue=2)'])
+                                                           'Color Detected (blue=0, green=1, red=2)'])
 
 
 def file_check(file_path, dataframe, file_name):
@@ -239,6 +261,8 @@ file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
 
 
 
+
+
     #add potential video saving feature
     #add square on the screen that shows where the color is being calculated
     #my idea is to process each frame, and to take the average of the values of all the pixels
@@ -255,3 +279,16 @@ file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
     #clock time for rapid color change
     # I need to experiment and have an idea of what constitutes a worthy color change
     #Potential functionality for dividing input changes into red/green/blues values
+
+
+# half_length = width // 6
+# start = (width // 2 - half_length, height // 2 - half_length)
+# end = (width // 2 + half_length, height // 2 + half_length)
+
+
+#'rxn.avi' can be renamed. This is the video of the reaction that will be saved.
+#codec = cv2.VideoWriter_fourcc(*'XVID')
+
+#out = cv2.VideoWriter('rx.avi', codec, fps, (width, height))
+#out.write(frame)
+#out.release()
