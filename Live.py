@@ -17,7 +17,7 @@ import io
 # Adjust 'camera' if the script is outputting the wrong camera.
 # This is very finicky since openCV doesn't give information about what number correlates to what camera.
 # There will be a lot of trial and error figuring out the right camera, because the number can hop around.
-camera = 0
+camera = 1
 
 print("Hold down your mouse and move it to select the region of interest")
 print("Press 'q' once finished to move on. Make sure NUMLOCK is locking the number pad.")
@@ -219,6 +219,9 @@ def file_check(file_path, dataframe, file_name):
                                         "Type 'yes' once done.")
                     if error_input in possible_inputs:
                         dataframe.to_csv(file_name, mode='w', index=False)
+    else:
+        dataframe.to_csv(file_name, mode='w', index=False)
+
 
 
 
