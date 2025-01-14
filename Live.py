@@ -2,13 +2,14 @@
 # This script may take some time to run (30 seconds - 1 minute) because of the cv2.VideoCapture function.
 # If there is previous data from a prior run in the current working directory, make sure to move it to another folder.
 # This includes '.avi' and '.csv' files.
+# https://www.reddit.com/r/learnpython/comments/zxxsal/open_cv_video_from_webcam_takes_abnormally_long/
 import cv2
 import numpy as np
 import pandas as pd
 import datetime
 import os
 
-vid = cv2.VideoCapture(1)
+vid = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 fps = vid.get(cv2.CAP_PROP_FPS)
 width  = vid.get(cv2.CAP_PROP_FRAME_WIDTH)   # float
 height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
@@ -68,7 +69,7 @@ user_inputs = [red_ui, green_ui, blue_ui]
 # Adjust the parameter of cv2.VideoCapture() if the script is outputting the wrong camera.
 # This is very finicky since openCV doesn't give information about what number correlates to what camera.
 # There will be a lot of trial and error figuring out the right camera, because the number can hop around.
-vid = cv2.VideoCapture(1)
+vid = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 codec = cv2.VideoWriter_fourcc(*'XVID')
 
 
