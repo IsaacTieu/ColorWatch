@@ -1,14 +1,17 @@
 # Run this to start the live webcam footage.
-# This script may take some time to run (30 seconds - 1 minute) because of the cv2.VideoCapture function.
+# This script may take some time to run (30 seconds - 1 minute) because of the cv2.VideoCapture function. (fixed)
 # If there is previous data from a prior run in the current working directory, make sure to move it to another folder.
 # This includes '.avi' and '.csv' files.
-# https://www.reddit.com/r/learnpython/comments/zxxsal/open_cv_video_from_webcam_takes_abnormally_long/
-#https://github.com/opencv/opencv/issues/17687
+import os
+#os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 import cv2
 import numpy as np
 import pandas as pd
 import datetime
-import os
+
+
+print("Hold down your mouse and move it to select the region of interest")
+print("Press 'q' once finished to move on.")
 
 vid = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 fps = vid.get(cv2.CAP_PROP_FPS)
@@ -21,6 +24,7 @@ thickness = 3
 # In the case of the webcam, start = (214, 134); end = (426, 346)
 
 
+# This detects mouse movements/inputs for the region of interest (ROI).
 start = None
 end = None
 drawing = False
@@ -48,10 +52,10 @@ while True:
     if start and end:
         frame = cv2.rectangle(frame, start, end, color, thickness)
 
-    # Show the live frame with the rectangle
     cv2.imshow("rectangle", frame)
 
-    # Wait for the user to press 'q' to quit
+    # Press the video window and then 'q' to quit and move on.
+    # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
     key = cv2.waitKey(1)
     if key & 0xFF == ord('q'):
         break
@@ -59,11 +63,11 @@ while True:
 vid.release()
 cv2.destroyAllWindows()
 
-
-
+# Once the ROI is set, users are asked to input the RGB color changes to detect.
 red_ui = input("Enter the RED value change to detect as an integer: ")
 green_ui = input("Enter the GREEN value change to detect as an integer: ")
 blue_ui = input("Enter the BLUE value change to detect as an integer: ")
+print("Once done taking measurements, press 'q' to save and export the data.")
 user_inputs = [red_ui, green_ui, blue_ui]
 
 # The script in CheckCameras.py finds what possible numbers to input to cv2.VideoCapture.
@@ -72,8 +76,6 @@ user_inputs = [red_ui, green_ui, blue_ui]
 # There will be a lot of trial and error figuring out the right camera, because the number can hop around.
 vid = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 codec = cv2.VideoWriter_fourcc(*'XVID')
-
-
 
 colors = []
 color_change_data = []
@@ -85,7 +87,7 @@ prev_color = None
 warning = False
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-# 'rxn.avi' can be renamed. This is the video of the reaction.
+# 'rxn.avi' can be renamed. This is the video of the reaction that will be saved.
 out = cv2.VideoWriter('rxn.avi', codec, fps, (width, height))
 
 while True:
@@ -113,6 +115,7 @@ while True:
                 break
 
     # If a color change is detected, a warning message is displayed.
+    # 1/14/25 There is a chance this text overlaps with the ROI. Fix for no collisions.
     if warning:
         text = 'RAPID COLOR CHANGE DETECTED'
         (text_width, text_height), _ = cv2.getTextSize(text, font, 1, 3)
@@ -131,7 +134,7 @@ while True:
     # start = (width // 2 - half_length, height // 2 - half_length)
     # end = (width // 2 + half_length, height // 2 + half_length)
 
-
+    # start and end are determined from the original ROI changer.
     frame = cv2.rectangle(frame, start, end, color, thickness)
 
     # This finds the average of all the pixel values in the square for one frame
