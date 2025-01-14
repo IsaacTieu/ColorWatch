@@ -3,6 +3,7 @@
 # If there is previous data from a prior run in the current working directory, make sure to move it to another folder.
 # This includes '.avi' and '.csv' files.
 # https://www.reddit.com/r/learnpython/comments/zxxsal/open_cv_video_from_webcam_takes_abnormally_long/
+#https://github.com/opencv/opencv/issues/17687
 import cv2
 import numpy as np
 import pandas as pd
