@@ -19,31 +19,43 @@ thickness = 3
 # In the case of the webcam, start = (214, 134); end = (426, 346)
 
 
-while True:
+start = None
+end = None
+drawing = False
+def draw_rectangle(event, x, y, flags, param):
+    global start, end, drawing
 
+    if event == cv2.EVENT_LBUTTONDOWN:
+        start = (x, y)
+        drawing = True
+
+    elif event == cv2.EVENT_MOUSEMOVE:
+        if drawing:
+            end = (x, y)
+
+    elif event == cv2.EVENT_LBUTTONUP:
+        drawing = False
+        end = (x, y)
+
+cv2.namedWindow("rectangle")
+cv2.setMouseCallback("rectangle", draw_rectangle)
+
+while True:
     _, frame = vid.read()
 
-    start_x = int(input("Type the top left x-coordinate: "))
-    start_y = int(input("Type the top left y-coordinate: "))
-    end_x = int(input("Type the bottom right x-coordinate: "))
-    end_y = int(input("Type the bottom right y-coordinate: "))
+    if start and end:
+        frame = cv2.rectangle(frame, start, end, color, thickness)
 
-    start = (start_x, start_y)
-    end = (end_x, end_y)
+    # Show the live frame with the rectangle
+    cv2.imshow("rectangle", frame)
 
-    frame = cv2.rectangle(frame, start, end, color, thickness)
-
-    cv2.imshow("Picture for region of interest", frame)
-
-
+    # Wait for the user to press 'q' to quit
     key = cv2.waitKey(1)
     if key & 0xFF == ord('q'):
         break
 
-
 vid.release()
 cv2.destroyAllWindows()
-
 
 
 
@@ -113,9 +125,9 @@ while True:
     # (0, 0) is the top left of the image
     # In the case of the webcam, start = (214, 134); end = (426, 346)
 
-    half_length = width // 6
-    start = (width // 2 - half_length, height // 2 - half_length)
-    end = (width // 2 + half_length, height // 2 + half_length)
+    # half_length = width // 6
+    # start = (width // 2 - half_length, height // 2 - half_length)
+    # end = (width // 2 + half_length, height // 2 + half_length)
 
 
     frame = cv2.rectangle(frame, start, end, color, thickness)
