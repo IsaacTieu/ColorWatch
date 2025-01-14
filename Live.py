@@ -3,7 +3,6 @@
 # If there is previous data from a prior run in the current working directory, make sure to move it to another folder.
 # This includes '.avi' and '.csv' files.
 import os
-#os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
 import cv2
 import numpy as np
 import pandas as pd
@@ -20,25 +19,21 @@ import io
 # There will be a lot of trial and error figuring out the right camera, because the number can hop around.
 camera = 0
 
-
 print("Hold down your mouse and move it to select the region of interest")
-print("Press 'q' once finished to move on.")
+print("Press 'q' once finished to move on. Make sure NUMLOCK is locking the number pad.")
 
 vid = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
-fps = vid.get(cv2.CAP_PROP_FPS)
-width  = vid.get(cv2.CAP_PROP_FRAME_WIDTH)   # float
-height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
-width = int(width)
-height = int(height)
+fps = int(vid.get(cv2.CAP_PROP_FPS))
+width  = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
 color = (0, 0, 0)
 thickness = 3
-# In the case of the webcam, start = (214, 134); end = (426, 346)
 
-
-# This detects mouse movements/inputs for the region of interest (ROI).
 start = None
 end = None
 drawing = False
+
+# This detects mouse movements/inputs for the region of interest (ROI).
 def draw_rectangle(event, x, y, flags, param):
     global start, end, drawing
 
@@ -57,6 +52,7 @@ def draw_rectangle(event, x, y, flags, param):
 cv2.namedWindow("rectangle")
 cv2.setMouseCallback("rectangle", draw_rectangle)
 
+# This is the loop where the ROI is drawn.
 while True:
     _, image = vid.read()
 
@@ -74,13 +70,16 @@ while True:
 vid.release()
 cv2.destroyAllWindows()
 
+print("If you don't want to detect a certain value, then type '256' because that is higher than the max difference.")
+
 # Once the ROI is set, users are asked to input the RGB color changes to detect.
 red_ui = input("Enter the RED value change to detect as an integer: ")
 green_ui = input("Enter the GREEN value change to detect as an integer: ")
 blue_ui = input("Enter the BLUE value change to detect as an integer: ")
-print("Once done taking measurements, press 'q' to save and export the data.")
+
 user_inputs = [blue_ui, green_ui, red_ui]
 
+print("Once done taking measurements, press 'q' to save and export the data.")
 
 vid = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
 
@@ -95,14 +94,12 @@ warning = False
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 output_memory_file = io.BytesIO()
-
 output = av.open(output_memory_file, 'w', format="mp4")
-stream = output.add_stream('h264', int(fps))
+stream = output.add_stream('h264', fps)
 stream.width = width
 stream.height = height
 stream.pix_fmt = 'yuv420p'
 stream.options = {'crf': '17'}  # Lower crf = better quality & more file space.
-
 
 while True:
     _, frame = vid.read()
@@ -129,7 +126,6 @@ while True:
                 break
 
     # If a color change is detected, a warning message is displayed.
-    # 1/14/25 There is a chance this text overlaps with the ROI. Fix for no collisions.
     if warning:
         text = 'RAPID COLOR CHANGE DETECTED'
         (text_width, text_height), _ = cv2.getTextSize(text, font, 1, 3)
@@ -137,13 +133,6 @@ while True:
         y = height // 8 + text_height // 2
         frame = cv2.putText(frame, text, (x, y), font, 1,
                             (255, 0, 0), 3)
-
-    # These are the properties of the square on the image.
-    # start is the top left corner coordinates
-    # end is the bottom right corner coordinates
-    # (0, 0) is the top left of the image
-    # In the case of the webcam, start = (214, 134); end = (426, 346)
-
 
     # start and end are determined from the original ROI changer.
     frame = cv2.rectangle(frame, start, end, color, thickness)
@@ -173,13 +162,11 @@ while True:
     if frame_counter == 30:
         colors_per_second.append(frame_average_color)
 
-
-    image = av.VideoFrame.from_ndarray(frame, format='bgr24')  # Convert image from NumPy Array to frame.
-    packet = stream.encode(image)  # Encode video frame
-    output.mux(packet)  # "Mux" the encoded frame (add the encoded frame to MP4 file).
+    image = av.VideoFrame.from_ndarray(frame, format='bgr24')
+    packet = stream.encode(image)
+    output.mux(packet)  # Write the encoded frame to MP4 file.
 
     cv2.imshow("Live webcam video", frame)
-
 
     # Press the video window and then 'q' to quit and export the color data
     # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
@@ -213,7 +200,7 @@ def file_check(file_path, dataframe, file_name):
         first_yes = input(f"Enter 'yes' to continue after you have moved '{file_path}' to another folder. "
                     f"If not moved, the current file will be overwritten. \n"
                     f"If something else is entered, the old file will stay and the current file will be lost: ")
-        possible_inputs = ['yes', ' yes', 'yes ', 'YES', ' YES', 'YES ']
+        possible_inputs = ['yes', ' yes', 'yes ', 'YES', ' YES', 'YES ', "'yes'", "'Yes'"]
         if first_yes in possible_inputs:
             try:
                 dataframe.to_csv(file_name, mode='w', index=False)
@@ -263,6 +250,17 @@ file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
 
 
 
+
+# 1/14
+# add failsafe for video saving
+# add failsafe for ROI and RGB change detection overlap
+# Eventually add type in coordinates feature? Note that the top left is (0,0)
+
+
+
+
+
+
     #add potential video saving feature
     #add square on the screen that shows where the color is being calculated
     #my idea is to process each frame, and to take the average of the values of all the pixels
@@ -284,6 +282,7 @@ file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
 # half_length = width // 6
 # start = (width // 2 - half_length, height // 2 - half_length)
 # end = (width // 2 + half_length, height // 2 + half_length)
+# start = (214, 134); end = (426, 346)
 
 
 #'rxn.avi' can be renamed. This is the video of the reaction that will be saved.
@@ -292,3 +291,6 @@ file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
 #out = cv2.VideoWriter('rx.avi', codec, fps, (width, height))
 #out.write(frame)
 #out.release()
+
+#os.environ["OPENCV_VIDEOIO_MSMF_ENABLE_HW_TRANSFORMS"] = "0"
+

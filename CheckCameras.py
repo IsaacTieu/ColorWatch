@@ -6,12 +6,9 @@
 # The script takes a while to run since VideoCapture is being run multiple times.
 
 import cv2
-device_list = []
-for i in range(5):
-    cap = cv2.VideoCapture(i)
-    if cap.isOpened():
-        device_list.append(f"Device {i}")
-        cap.release()
 
-for i in range(len(device_list)):
-    print(f"Possible Video Capture parameter: {i}")
+for i in range(5):
+    cap = cv2.VideoCapture(i, cv2.CAP_DSHOW)
+    if cap.isOpened():
+        print(i)
+        cap.release()
