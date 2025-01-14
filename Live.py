@@ -8,6 +8,45 @@ import pandas as pd
 import datetime
 import os
 
+vid = cv2.VideoCapture(1)
+fps = vid.get(cv2.CAP_PROP_FPS)
+width  = vid.get(cv2.CAP_PROP_FRAME_WIDTH)   # float
+height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
+width = int(width)
+height = int(height)
+color = (0, 0, 0)
+thickness = 3
+# In the case of the webcam, start = (214, 134); end = (426, 346)
+
+
+while True:
+
+    _, frame = vid.read()
+
+    start_x = int(input("Type the top left x-coordinate: "))
+    start_y = int(input("Type the top left y-coordinate: "))
+    end_x = int(input("Type the bottom right x-coordinate: "))
+    end_y = int(input("Type the bottom right y-coordinate: "))
+
+    start = (start_x, start_y)
+    end = (end_x, end_y)
+
+    frame = cv2.rectangle(frame, start, end, color, thickness)
+
+    cv2.imshow("Picture for region of interest", frame)
+
+
+    key = cv2.waitKey(1)
+    if key & 0xFF == ord('q'):
+        break
+
+
+vid.release()
+cv2.destroyAllWindows()
+
+
+
+
 red_ui = input("Enter the RED value change to detect as an integer: ")
 green_ui = input("Enter the GREEN value change to detect as an integer: ")
 blue_ui = input("Enter the BLUE value change to detect as an integer: ")
@@ -20,11 +59,7 @@ user_inputs = [red_ui, green_ui, blue_ui]
 vid = cv2.VideoCapture(1)
 codec = cv2.VideoWriter_fourcc(*'XVID')
 
-fps = vid.get(cv2.CAP_PROP_FPS)
-width  = vid.get(cv2.CAP_PROP_FRAME_WIDTH)   # float
-height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
-width = int(width)
-height = int(height)
+
 
 colors = []
 color_change_data = []
@@ -81,8 +116,7 @@ while True:
     half_length = width // 6
     start = (width // 2 - half_length, height // 2 - half_length)
     end = (width // 2 + half_length, height // 2 + half_length)
-    color = (0, 0, 0)
-    thickness = 3
+
 
     frame = cv2.rectangle(frame, start, end, color, thickness)
 
