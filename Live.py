@@ -260,6 +260,9 @@ file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
 # add failsafe for video saving
 # add failsafe for ROI and RGB change detection overlap
 # Eventually add type in coordinates feature? Note that the top left is (0,0)
+# Add way to live show data
+# Add way to add notes about what is happening
+
 
 
 
