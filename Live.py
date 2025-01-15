@@ -78,7 +78,7 @@ red_ui = input("Enter the RED value change to detect as an integer: ")
 green_ui = input("Enter the GREEN value change to detect as an integer: ")
 blue_ui = input("Enter the BLUE value change to detect as an integer: ")
 
-user_inputs = [blue_ui, green_ui, red_ui]
+user_inputs = [red_ui, green_ui, blue_ui]
 
 print("Once done taking measurements, press 'q' to save and export the data.")
 
@@ -104,6 +104,7 @@ stream.options = {'crf': '17'}  # Lower crf = better quality & more file space.
 
 while True:
     _, frame = vid.read()
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     # This section detects change in color based on user input and displays a warning sign.
     if frame_counter == 1:
@@ -121,7 +122,7 @@ while True:
                 warning = True
                 warning_counter = 0
                 current_time = datetime.datetime.now()
-                data = (current_time, color_diff[2], color_diff[1], color_diff[0],
+                data = (current_time, color_diff[0], color_diff[1], color_diff[2],
                                           len(colors) + 1, len(colors_per_second) + 1, i)
                 color_change_data.append(data)
                 break
@@ -146,9 +147,9 @@ while True:
     for r in range(start[1] + thickness, end[1] - thickness):
         for c in range(start[0] + thickness, end[0] - thickness):
             pixel = frame[r][c] # List of the 3 RGB values as [B, G, R]
-            blues.append(pixel[0])
+            reds.append(pixel[0])
             greens.append(pixel[1])
-            reds.append(pixel[2])
+            blues.append(pixel[2])
 
     average_red = np.mean(reds)
     average_green = np.mean(greens)
