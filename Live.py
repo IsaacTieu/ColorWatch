@@ -88,6 +88,7 @@ vid = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
 colors = []
 color_change_data = []
 colors_per_second = []
+notes = []
 
 frame_counter = 0
 warning_counter = 0
@@ -103,7 +104,7 @@ stream.height = height
 stream.pix_fmt = 'yuv420p'
 stream.options = {'crf': '17'}  # Lower crf = better quality & more file space.
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(1, 3, figsize=(9, 3))
 x_data = []
 red_plot = []
 green_plot = []
@@ -185,12 +186,17 @@ while True:
     green_plot.append(frame_average_color[1])
     blue_plot.append(frame_average_color[2])
 
-    ax.clear()
-    ax.plot(x_data, red_plot, color='r', label='Red')
-    ax.plot(x_data, green_plot, color='g', label='Green')
-    ax.plot(x_data, blue_plot, color='b', label='Blue')
+    ax[0].clear()
+    ax[1].clear()
+    ax[2].clear()
 
-    ax.legend()
+    ax[0].plot(x_data, red_plot, color='r', label='Red')
+    ax[1].plot(x_data, green_plot, color='g', label='Green')
+    ax[2].plot(x_data, blue_plot, color='b', label='Blue')
+
+    ax[0].legend()
+    ax[1].legend()
+    ax[2].legend()
 
     plt.draw()
     plt.pause(0.01)
@@ -202,6 +208,9 @@ while True:
     # Press the video window and then 'q' to quit and export the color data
     # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
     key = cv2.waitKey(1)
+    if key == ord('u'):
+        note = input('Type a note')
+        notes.append([note, len(colors) + 1, len(colors_per_second)])
     if key & 0xFF == ord('q'):
         break
 
@@ -224,6 +233,8 @@ color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date /
                                                            'Color Table Row Number',
                                                            'Colors per Second Table Row Number',
                                                            'Color Detected (blue=0, green=1, red=2)'])
+notes_df = pd.DataFrame(notes, columns=['Note', 'Color Table Row Number',
+                                        'Colors per Second Table Row  Number'])
 
 
 def file_check(file_path, dataframe, file_name):
@@ -265,6 +276,8 @@ file_check('colorsPerSecondData.csv', colors_per_second_df, 'colorsPerSecondData
 
 # Can rename 'colorChangeData'. This is the data for when a color change is detected.
 file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
+
+file_check('notes.csv', notes_df, 'notes.csv')
 
 # All of these files are saved into the current working directory (CWD).
 # Make sure to transfer the data files somewhere else if it needs to be referenced later.
