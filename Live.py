@@ -17,7 +17,8 @@ import io
 # Adjust 'camera' if the script is outputting the wrong camera.
 # This is very finicky since openCV doesn't give information about what number correlates to what camera.
 # There will be a lot of trial and error figuring out the right camera, because the number can hop around.
-camera = 1
+camera = 0
+warning_sign_length = 90
 
 print("Hold down your mouse and move it to select the region of interest")
 print("Press 'q' once finished to move on. Make sure NUMLOCK is locking the number pad.")
@@ -108,7 +109,7 @@ while True:
     if frame_counter == 1:
         prev_color = colors[-1]
     # The warning sign will be on for 90 frames (3 seconds).
-    if warning_counter == 90:
+    if warning_counter == warning_sign_length:
         warning = False
     # Checks for color change every 31st frame (approximately every second) and then resets.
     if frame_counter == 31:
@@ -127,7 +128,7 @@ while True:
 
     # If a color change is detected, a warning message is displayed.
     if warning:
-        text = 'RAPID COLOR CHANGE DETECTED'
+        text = 'COLOR CHANGE DETECTED'
         (text_width, text_height), _ = cv2.getTextSize(text, font, 1, 3)
         x = (width - text_width) // 2
         y = height // 8 + text_height // 2
@@ -157,7 +158,8 @@ while True:
     colors.append(frame_average_color)
 
     frame_counter += 1
-    warning_counter += 1
+    if warning_counter < warning_sign_length:
+        warning_counter += 1
 
     if frame_counter == 30:
         colors_per_second.append(frame_average_color)
