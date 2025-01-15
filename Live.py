@@ -9,6 +9,7 @@ import pandas as pd
 import datetime
 import av
 import io
+import matplotlib.pyplot as plt
 
 # https://stackoverflow.com/questions/73609006/how-to-create-a-video-out-of-frames-without-saving-it-to-disk-using-python
 # Video capturing code taken from here
@@ -102,9 +103,18 @@ stream.height = height
 stream.pix_fmt = 'yuv420p'
 stream.options = {'crf': '17'}  # Lower crf = better quality & more file space.
 
+fig, ax = plt.subplots()
+x_data = []
+red_plot = []
+green_plot = []
+blue_plot = []
+x_axis_counter = 0
+
 while True:
     _, frame = vid.read()
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+
+
 
     # This section detects change in color based on user input and displays a warning sign.
     if frame_counter == 1:
@@ -147,9 +157,9 @@ while True:
     for r in range(start[1] + thickness, end[1] - thickness):
         for c in range(start[0] + thickness, end[0] - thickness):
             pixel = frame[r][c] # List of the 3 RGB values as [B, G, R]
-            reds.append(pixel[0])
+            blues.append(pixel[0])
             greens.append(pixel[1])
-            blues.append(pixel[2])
+            reds.append(pixel[2])
 
     average_red = np.mean(reds)
     average_green = np.mean(greens)
@@ -169,7 +179,25 @@ while True:
     packet = stream.encode(image)
     output.mux(packet)  # Write the encoded frame to MP4 file.
 
+    x_data.append(x_axis_counter)
+    x_axis_counter += 1
+    red_plot.append(frame_average_color[0])
+    green_plot.append(frame_average_color[1])
+    blue_plot.append(frame_average_color[2])
+
+    ax.clear()
+    ax.plot(x_data, red_plot, color='r', label='Red')
+    ax.plot(x_data, green_plot, color='g', label='Green')
+    ax.plot(x_data, blue_plot, color='b', label='Blue')
+
+    ax.legend()
+
+    plt.draw()
+    plt.pause(0.01)
+
     cv2.imshow("Live webcam video", frame)
+    plt.show(block=False)
+
 
     # Press the video window and then 'q' to quit and export the color data
     # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
