@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 # There will be a lot of trial and error figuring out the right camera, because the number can hop around.
 camera = 0
 warning_sign_length = 90
+possible_inputs = ['yes', ' yes', 'yes ', 'YES', ' YES', 'YES ', "'yes'", "'Yes'"]
 
 print("Hold down your mouse and move it to select the region of interest")
 print("Press 'q' once finished to move on. Make sure NUMLOCK is locking the number pad.")
@@ -72,6 +73,10 @@ while True:
 vid.release()
 cv2.destroyAllWindows()
 
+if os.path.exists('output.mp4'):
+    if not input("Type yes if you have moved 'output.mp4': ") in possible_inputs:
+        print("'output.mp4' will be replaced.")
+
 print("If you don't want to detect a certain value, then type '256' because that is higher than the max difference.")
 
 # Once the ROI is set, users are asked to input the RGB color changes to detect.
@@ -113,9 +118,6 @@ x_axis_counter = 0
 
 while True:
     _, frame = vid.read()
-
-
-
 
     # This section detects change in color based on user input and displays a warning sign.
     if frame_counter == 1:
@@ -180,6 +182,7 @@ while True:
     packet = stream.encode(image)
     output.mux(packet)  # Write the encoded frame to MP4 file.
 
+    # Live data visualization
     x_data.append(x_axis_counter)
     x_axis_counter += 1
     red_plot.append(frame_average_color[0])
@@ -204,13 +207,11 @@ while True:
     cv2.imshow("Live webcam video", frame)
     plt.show(block=False)
 
-
     # Press the video window and then 'q' to quit and export the color data
     # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
     key = cv2.waitKey(1)
     if key == ord('u'):
-        note = input('Type a note')
-        notes.append([note, len(colors) + 1, len(colors_per_second)])
+        notes.append([len(colors) + 1, len(colors_per_second)])
     if key & 0xFF == ord('q'):
         break
 
@@ -233,8 +234,8 @@ color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date /
                                                            'Color Table Row Number',
                                                            'Colors per Second Table Row Number',
                                                            'Color Detected (blue=0, green=1, red=2)'])
-notes_df = pd.DataFrame(notes, columns=['Note', 'Color Table Row Number',
-                                        'Colors per Second Table Row  Number'])
+notes_df = pd.DataFrame(notes, columns=['Color Table Row Number of note',
+                                        'Colors per Second Table Row  Number of note'])
 
 
 def file_check(file_path, dataframe, file_name):
@@ -242,7 +243,6 @@ def file_check(file_path, dataframe, file_name):
         first_yes = input(f"Enter 'yes' to continue after you have moved '{file_path}' to another folder. "
                     f"If not moved, the current file will be overwritten. \n"
                     f"If something else is entered, the old file will stay and the current file will be lost: ")
-        possible_inputs = ['yes', ' yes', 'yes ', 'YES', ' YES', 'YES ', "'yes'", "'Yes'"]
         if first_yes in possible_inputs:
             try:
                 dataframe.to_csv(file_name, mode='w', index=False)
@@ -296,7 +296,8 @@ file_check('notes.csv', notes_df, 'notes.csv')
 
 
 
-
+# 1/15
+# Fix fps
 
 # 1/14
 # add failsafe for video saving
