@@ -3,6 +3,8 @@
 # If there is previous data from a prior run in the current working directory, make sure to move it to another folder.
 # This includes '.avi' and '.csv' files.
 import os
+import time
+
 import cv2
 import numpy as np
 import pandas as pd
@@ -115,9 +117,12 @@ red_plot = []
 green_plot = []
 blue_plot = []
 x_axis_counter = 0
+start_time = time.time()
 
 while True:
     _, frame = vid.read()
+    end_time = time.time()
+    time_diff = end_time - start_time
 
     # This section detects change in color based on user input and displays a warning sign.
     if frame_counter == 1:
@@ -126,7 +131,9 @@ while True:
     if warning_counter == warning_sign_length:
         warning = False
     # Checks for color change every 31st frame (approximately every second) and then resets.
-    if frame_counter == 31:
+    #if frame_counter == 31:
+    if time_diff >= 1:
+        start_time = end_time
         frame_counter = 0
         test_color = colors[-1]
         color_diff = [abs(x - y) for x, y in zip(test_color, prev_color)] #[B, G, R]
@@ -175,7 +182,8 @@ while True:
     if warning_counter < warning_sign_length:
         warning_counter += 1
 
-    if frame_counter == 30:
+    #if frame_counter == 30:
+    if time_diff >= 1:
         colors_per_second.append(frame_average_color)
 
     image = av.VideoFrame.from_ndarray(frame, format='bgr24')
@@ -206,6 +214,7 @@ while True:
 
     cv2.imshow("Live webcam video", frame)
     plt.show(block=False)
+
 
     # Press the video window and then 'q' to quit and export the color data
     # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
