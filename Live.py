@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 # There will be a lot of trial and error figuring out the right camera, because the number can hop around.
 camera = 0
 warning_sign_length = 90
-possible_inputs = ['yes', ' yes', 'yes ', 'YES', ' YES', 'YES ', "'yes'", "'Yes'"]
+possible_inputs = ['yes', ' yes', 'yes ', 'YES', ' YES', 'YES ', "'yes'", "'Yes'", 'ye']
 
 print("Hold down your mouse and move it to select the region of interest")
 print("Press 'q' once finished to move on. Make sure NUMLOCK is locking the number pad.")
@@ -143,7 +143,8 @@ while True:
                 warning_counter = 0
                 current_time = datetime.datetime.now()
                 data = (current_time, color_diff[0], color_diff[1], color_diff[2],
-                                          len(colors) + 1, len(colors_per_second) + 1, i)
+                                          len(colors) + 1, len(colors_per_second) + 1, i,
+                        test_color[0], test_color[1], test_color[2])
                 color_change_data.append(data)
                 break
 
@@ -242,7 +243,10 @@ color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date /
                                                            'Blue Difference',
                                                            'Color Table Row Number',
                                                            'Colors per Second Table Row Number',
-                                                           'Color Detected (blue=0, green=1, red=2)'])
+                                                           'Color Detected (red=0, green=1, blue=2)',
+                                                           'Red Value',
+                                                           'Blue Value',
+                                                           'Green Value'])
 notes_df = pd.DataFrame(notes, columns=['Color Table Row Number of note',
                                         'Colors per Second Table Row  Number of note'])
 
