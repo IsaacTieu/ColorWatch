@@ -223,7 +223,7 @@ while True:
     key = cv2.waitKey(1)
     if key == ord('u'):
         current_time = datetime.datetime.now()
-        notes.append([len(colors) + 1, len(colors_per_second), curren_time])
+        notes.append([len(colors) + 1, len(colors_per_second), current_time])
     if key & 0xFF == ord('q'):
         break
 
