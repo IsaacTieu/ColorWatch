@@ -176,7 +176,8 @@ while True:
     average_green = np.mean(greens)
     average_blue = np.mean(blues)
 
-    frame_average_color = [average_red, average_green, average_blue]
+    current_time = datetime.datetime.now()
+    frame_average_color = [average_red, average_green, average_blue, current_time]
     colors.append(frame_average_color)
 
     frame_counter += 1
@@ -221,7 +222,8 @@ while True:
     # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
     key = cv2.waitKey(1)
     if key == ord('u'):
-        notes.append([len(colors) + 1, len(colors_per_second)])
+        current_time = datetime.datetime.now()
+        notes.append([len(colors) + 1, len(colors_per_second), curren_time])
     if key & 0xFF == ord('q'):
         break
 
@@ -235,8 +237,9 @@ with open("output.mp4", "wb") as f:
     f.write(output_memory_file.getbuffer())
 
 
-color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue'])
-colors_per_second_df = pd.DataFrame(colors_per_second, columns=['Red', 'Green', 'Blue'])
+color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue', 'Current time: Date / HH:MM:SS'])
+colors_per_second_df = pd.DataFrame(colors_per_second, columns=['Red', 'Green', 'Blue',
+                                                                'Current time: Date / HH:MM:SS'])
 color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date / HH:MM:SS',
                                                            'Red Difference',
                                                            'Green Difference',
@@ -248,7 +251,8 @@ color_change_df = pd.DataFrame(color_change_data, columns=['Current time: Date /
                                                            'Blue Value',
                                                            'Green Value'])
 notes_df = pd.DataFrame(notes, columns=['Color Table Row Number of note',
-                                        'Colors per Second Table Row  Number of note'])
+                                        'Colors per Second Table Row  Number of note',
+                                        'Current time: Date / HH:MM:SS'])
 
 
 def file_check(file_path, dataframe, file_name):
