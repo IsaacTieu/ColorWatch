@@ -111,7 +111,7 @@ stream.height = height
 stream.pix_fmt = 'yuv420p'
 stream.options = {'crf': '17'}  # Lower crf = better quality & more file space.
 
-fig, ax = plt.subplots(1, 3, figsize=(9, 3))
+fig, ax = plt.subplots(1, 3, figsize=(6, 2))
 x_data = []
 red_plot = []
 green_plot = []
@@ -131,13 +131,12 @@ while True:
     if warning_counter == warning_sign_length:
         warning = False
     # Checks for color change every 31st frame (approximately every second) and then resets.
-    #if frame_counter == 31:
     if time_diff >= 1:
         start_time = end_time
         frame_counter = 0
         test_color = colors[-1]
         color_diff = [abs(x - y) for x, y in zip(test_color, prev_color)] #[B, G, R]
-        for i in range(len(color_diff)):
+        for i in range(len(color_diff) - 1): # The -1 avoids the current time.
             if int(color_diff[i]) > int(user_inputs[i]):
                 warning = True
                 warning_counter = 0
@@ -184,7 +183,6 @@ while True:
     if warning_counter < warning_sign_length:
         warning_counter += 1
 
-    #if frame_counter == 30:
     if time_diff >= 1:
         colors_per_second.append(frame_average_color)
 
@@ -232,6 +230,7 @@ packet = stream.encode(None)
 output.mux(packet)
 output.close()
 cv2.destroyAllWindows()
+plt.close()
 
 with open("output.mp4", "wb") as f:
     f.write(output_memory_file.getbuffer())
