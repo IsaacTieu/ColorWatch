@@ -1,39 +1,38 @@
 # Run this to start the live webcam footage.
-# This script may take some time to run (30 seconds - 1 minute) because of the cv2.VideoCapture function. (fixed)
 # If there is previous data from a prior run in the current working directory, make sure to move it to another folder.
-# This includes '.avi' and '.csv' files.
+# This includes '.mp4' and '.csv' files.
 import os
 import time
-
-import cv2
-import numpy as np
-import pandas as pd
 import datetime
 import av
 import io
+import cv2
+import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
+from utils import file_check, possible_inputs
 
 # https://stackoverflow.com/questions/73609006/how-to-create-a-video-out-of-frames-without-saving-it-to-disk-using-python
 # Video capturing code taken from here
 
-# The script in CheckCameras.py finds what possible numbers to input to cv2.VideoCapture.
-# Adjust 'camera' if the script is outputting the wrong camera.
-# This is very finicky since openCV doesn't give information about what number correlates to what camera.
-# There will be a lot of trial and error figuring out the right camera, because the number can hop around.
+# Adjust 'camera' if the script is outputting the wrong camera based on the output of CheckCameras.py
 camera = 0
-warning_sign_length = 90
-possible_inputs = ['yes', ' yes', 'yes ', 'YES', ' YES', 'YES ', "'yes'", "'Yes'", 'ye']
+warning_sign_length = 60
+font = cv2.FONT_HERSHEY_SIMPLEX
+rectangle_color = (0, 0, 0)
+thickness = 3
 
 print("Hold down your mouse and move it to select the region of interest")
 print("Press 'q' once finished to move on. Make sure NUMLOCK is locking the number pad.")
 
+# Camera dimensions
 vid = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
 fps = int(vid.get(cv2.CAP_PROP_FPS))
 width  = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
-color = (0, 0, 0)
-thickness = 3
 
+
+# Region of interest variables
 start = None
 end = None
 drawing = False
@@ -62,7 +61,7 @@ while True:
     _, image = vid.read()
 
     if start and end:
-        image = cv2.rectangle(image, start, end, color, thickness)
+        image = cv2.rectangle(image, start, end, rectangle_color, thickness)
 
     cv2.imshow("rectangle", image)
 
@@ -74,6 +73,9 @@ while True:
 
 vid.release()
 cv2.destroyAllWindows()
+
+if not start and not end:
+    raise ValueError('No Region of Interest input')
 
 if os.path.exists('output.mp4'):
     if not input("Type yes if you have moved 'output.mp4': ") in possible_inputs:
@@ -92,17 +94,19 @@ print("Once done taking measurements, press 'q' to save and export the data.")
 
 vid = cv2.VideoCapture(camera, cv2.CAP_DSHOW)
 
+# Output data
 colors = []
 color_change_data = []
 colors_per_second = []
 notes = []
 
+# Internal counters
 frame_counter = 0
 warning_counter = 0
 prev_color = None
 warning = False
-font = cv2.FONT_HERSHEY_SIMPLEX
 
+# Video saving feature
 output_memory_file = io.BytesIO()
 output = av.open(output_memory_file, 'w', format="mp4")
 stream = output.add_stream('h264', fps)
@@ -111,6 +115,7 @@ stream.height = height
 stream.pix_fmt = 'yuv420p'
 stream.options = {'crf': '17'}  # Lower crf = better quality & more file space.
 
+# Live plots
 fig, ax = plt.subplots(1, 3, figsize=(6, 2))
 x_data = []
 red_plot = []
@@ -149,15 +154,19 @@ while True:
 
     # If a color change is detected, a warning message is displayed.
     if warning:
+        #start is top left, end is bottom right
+        # want text to be above start[1] and in the middle of end[0] - start[0]
         text = 'COLOR CHANGE DETECTED'
         (text_width, text_height), _ = cv2.getTextSize(text, font, 1, 3)
         x = (width - text_width) // 2
-        y = height // 8 + text_height // 2
+        #y = height // 8 + text_height // 2
+        height_diff = start[1] - 100
+        y = height_diff if height_diff > 0 else height + height_diff
         frame = cv2.putText(frame, text, (x, y), font, 1,
                             (255, 0, 0), 3)
 
     # start and end are determined from the original ROI changer.
-    frame = cv2.rectangle(frame, start, end, color, thickness)
+    frame = cv2.rectangle(frame, start, end, rectangle_color, thickness)
 
     # This finds the average of all the pixel values in the square for one frame
     reds = []
@@ -235,7 +244,6 @@ plt.close()
 with open("output.mp4", "wb") as f:
     f.write(output_memory_file.getbuffer())
 
-
 color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue', 'Current time: Date / HH:MM:SS'])
 colors_per_second_df = pd.DataFrame(colors_per_second, columns=['Red', 'Green', 'Blue',
                                                                 'Current time: Date / HH:MM:SS'])
@@ -253,37 +261,7 @@ notes_df = pd.DataFrame(notes, columns=['Color Table Row Number of note',
                                         'Colors per Second Table Row  Number of note',
                                         'Current time: Date / HH:MM:SS'])
 
-
-def file_check(file_path, dataframe, file_name):
-    if os.path.exists(file_path):
-        first_yes = input(f"Enter 'yes' to continue after you have moved '{file_path}' to another folder. "
-                    f"If not moved, the current file will be overwritten. \n"
-                    f"If something else is entered, the old file will stay and the current file will be lost: ")
-        if first_yes in possible_inputs:
-            try:
-                dataframe.to_csv(file_name, mode='w', index=False)
-            except PermissionError:
-                error_input = input("There is a permission error happening. Try closing the excel."
-                                    "Type 'yes' once done.")
-                if error_input in possible_inputs:
-                    dataframe.to_csv(file_name, mode='w', index=False)
-        else:
-            second_yes = input('Last chance to save the file. Type "yes" to save the file ')
-            if second_yes in possible_inputs:
-                try:
-                    dataframe.to_csv(file_name, mode='w', index=False)
-                except PermissionError:
-                    error_input = input("There is a permission error happening. Try closing the excel."
-                                        "Type 'yes' once done.")
-                    if error_input in possible_inputs:
-                        dataframe.to_csv(file_name, mode='w', index=False)
-    else:
-        dataframe.to_csv(file_name, mode='w', index=False)
-
-
-
-
-# This webcam is 30 FPS, which means that each second gives 30 rows of color data
+# This webcam is 30 FPS, which means that each second gives 30 rows of color data.
 # Can rename 'colorData'. This is the table of all the RGB values throughout the reaction.
 file_check('colorData.csv', color_df, 'colorData.csv')
 
@@ -295,7 +273,7 @@ file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
 
 file_check('notes.csv', notes_df, 'notes.csv')
 
-# All of these files are saved into the current working directory (CWD).
+# All of these files are saved into the current working directory.
 # Make sure to transfer the data files somewhere else if it needs to be referenced later.
 
 
