@@ -11,16 +11,22 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from utils import file_check, possible_inputs
+import pymsteams
+
 
 # https://stackoverflow.com/questions/73609006/how-to-create-a-video-out-of-frames-without-saving-it-to-disk-using-python
 # Video capturing code taken from here
 
 # Adjust 'camera' if the script is outputting the wrong camera based on the output of CheckCameras.py
-camera = 0
+camera = 1
 warning_sign_length = 60
+color_detection_time = 2 # in seconds
 font = cv2.FONT_HERSHEY_SIMPLEX
 rectangle_color = (0, 0, 0)
 thickness = 3
+webhook_url = ("https://azcollaboration.webhook.office.com/webhookb2/b54ccbde-8107-419e-9cb7-60692f9c3e79@af8e89a3-"
+               "d9ac-422f-ad06-cc4eb4214314/IncomingWebhook/d3f21f8d0a94461fa20ec6a31e2aa956/1f1eb231-d47e-41ab-8454-"
+               "f4fdf14f73b5/V24CYESB-U5yYFccXnpfXGZZ7cmqd0OewLRWOQOFvOlnw1")
 
 print("Hold down your mouse and move it to select the region of interest")
 print("Press 'q' once finished to move on. Make sure NUMLOCK is locking the number pad.")
@@ -122,6 +128,7 @@ red_plot = []
 green_plot = []
 blue_plot = []
 x_axis_counter = 0
+rxn_start_time = time.time()
 start_time = time.time()
 
 while True:
@@ -136,7 +143,7 @@ while True:
     if warning_counter == warning_sign_length:
         warning = False
     # Checks for color change every 31st frame (approximately every second) and then resets.
-    if time_diff >= 1:
+    if time_diff >= color_detection_time:
         start_time = end_time
         frame_counter = 0
         test_color = colors[-1]
@@ -150,6 +157,11 @@ while True:
                                           len(colors) + 1, len(colors_per_second) + 1, i,
                         test_color[0], test_color[1], test_color[2])
                 color_change_data.append(data)
+                card = pymsteams.connectorcard(webhook_url)
+                message = (f'Color change at {current_time} and {time.time() - rxn_start_time} seconds into reaction.'
+                           f'\n Red delta: {color_diff[0]}, Green delta: {color_diff[1]}, Blue delta: {color_diff[2]}')
+                card.text(message)
+                assert card.send()
                 break
 
     # If a color change is detected, a warning message is displayed.
