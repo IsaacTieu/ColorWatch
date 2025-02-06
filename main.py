@@ -1,7 +1,3 @@
-from gooey import Gooey, GooeyParser
-import threading
-import time
-import os
 import datetime
 import av
 import io
@@ -9,12 +5,15 @@ import cv2
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import threading
+import time
+import tkinter as tk
+from tkinter import ttk, filedialog
 import pymsteams
 
 
 warning_sign_length = 60
-color_detection_time = 2
+color_detection_time = 1
 font = cv2.FONT_HERSHEY_SIMPLEX
 rectangle_color = (0, 0, 0)
 thickness = 3
@@ -24,10 +23,7 @@ webhook_url = ("https://azcollaboration.webhook.office.com/webhookb2/b54ccbde-81
 
 start = None
 end = None
-run_second = False
-run_third = False
-camera = None
-camera2 = None
+camera_index = None
 red_ui = None
 blue_ui = None
 green_ui = None
@@ -77,8 +73,6 @@ def define_roi(camera_index):
         # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q'):
-            global run_second
-            run_second = True
             break
 
     vid.release()
@@ -242,7 +236,6 @@ def live_monitoring(camera_index):
         #     current_time = datetime.datetime.now()
         #     notes.append([len(colors) + 1, len(colors_per_second), current_time])
         if key & 0xFF == ord('q'):
-            run_third = True
             break
 
     vid.release()
@@ -272,81 +265,87 @@ def live_monitoring(camera_index):
     #                                         'Colors per Second Table Row  Number of note',
     #                                         'Current time: Date / HH:MM:SS'])
 
-    # This webcam is 30 FPS, which means that each second gives 30 rows of color data.
-    # # Can rename 'colorData'. This is the table of all the RGB values throughout the reaction.
-    # file_check('colorData.csv', color_df, 'colorData.csv')
-    #
-    # # Can rename 'colorsPerSecondData'. This is the table of the RGB values at each second to shorten Excel.
-    # file_check('colorsPerSecondData.csv', colors_per_second_df, 'colorsPerSecondData.csv')
-    #
-    # # Can rename 'colorChangeData'. This is the data for when a color change is detected.
-    # file_check('colorChangeData.csv', color_change_df, 'colorChangeData.csv')
+def on_next_page1():
+    global camera_index
+    camera_index = int(camera_index_entry.get())
 
-    # file_check('notes.csv', notes_df, 'notes.csv')
+    notebook.select(page2)
 
-    # All of these files are saved into the current working directory.
-    # Make sure to transfer the data files somewhere else if it needs to be referenced later.
-
-
-
-@Gooey(program_name="Webcam ROI Selection")
-def run_first_gui():
-    parser = GooeyParser(description="Get User Input for Webcam Feed")
-    parser.add_argument('camera_index', type=int, help='Enter the camera index (typically 1)')
-
-    args = parser.parse_args()
-    print(f"Camera Index: {args.camera_index}")
-    global camera, camera2
-    camera = args.camera_index
-    camera2 = int(args.camera_index)
-
-    webcam_thread = threading.Thread(target=lambda: define_roi(args.camera_index))
+    webcam_thread = threading.Thread(target=define_roi, args=(camera_index,))
     webcam_thread.start()
 
-@Gooey(program_name="Webcam Live Monitoring")
-def run_second_gui():
-    parser = GooeyParser(description="Get User Input for Live Monitoring")
-    parser.add_argument('red_value', type=int, help='Enter the red value change to detect.')
-    # parser.add_argument('green_value', type=int, help='Enter the green value change to detect.')
-    # parser.add_argument('blue_value', type=int, help='Enter the blue value change to detect.')
 
-    args = parser.parse_args()
-    print(f"Red Value Change: {args.red_value}")
-    # print(f"Green Value Change: {args.green_value}")
-    # print(f"Blue Value Change: {args.blue_value}")
+def on_next_page2():
+    red_value = int(red_value_entry.get())
+    green_value = int(green_value_entry.get())
+    blue_value = int(blue_value_entry.get())
+    global red_ui, green_ui, blue_ui
+    red_ui = red_value
+    green_ui = green_value
+    blue_ui = blue_value
 
-    global red_ui, blue_ui, green_ui
-    red_ui = int(args.red_value)
-    blue_ui = int(args.blue_value)
-    green_ui = int(args.green_value)
+    notebook.select(page3)
 
-    live_thread = threading.Thread(target=lambda: live_monitoring(camera2))
+    live_thread = threading.Thread(target=live_monitoring, args=(camera_index,))
     live_thread.start()
 
-@Gooey(program_name="File Saving")
-def run_third_gui():
-    parser = GooeyParser(description="Get User Input for Webcam Feed")
-    parser.add_argument("colors_output", widget="FileChooser", help="Select output file")
-    parser.add_argument("colors_per_second_output", widget="FileChooser", help="Select output file")
-    parser.add_argument("color_change_output", widget="FileChooser", help="Select output file")
 
-    args = parser.parse_args()
+def save_files():
+    color_file = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")],
+                                              title="Save Color Data")
+    if color_file:
+        color_df.to_csv(color_file, mode='w', index=False)
 
-    def write_file(df, output):
-        df.to_csv(output, mode='w', index=False)
+    colors_per_second_file = filedialog.asksaveasfilename(defaultextension=".csv",
+                                                          filetypes=[("CSV files", "*.csv")],
+                                                          title="Save Colors Per Second Data")
+    if colors_per_second_file:
+        colors_per_second_df.to_csv(colors_per_second_file, mode='w', index=False)
 
-    write_file(color_df, args.colors_output)
-    write_file(colors_per_second_df, args.colors_per_second_output)
-    write_file(color_change_df, args.color_change_output)
-
-
-
+    color_change_file = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")],
+                                                     title="Save Color Change Data")
+    if color_change_file:
+        color_change_df.to_csv(color_change_file, mode='w', index=False)
 
 if __name__ == '__main__':
-    run_first_gui()
-    while not run_second:
-        time.sleep(1)
-    run_second_gui()
-    while not run_third:
-        time.sleep(1)
-    run_third_gui()
+    root = tk.Tk()
+    root.title("Webcam Process")
+
+    notebook = ttk.Notebook(root)
+    notebook.pack(pady=10, expand=True)
+
+    page1 = ttk.Frame(notebook)
+    notebook.add(page1, text="ROI Selection")
+
+    page2 = ttk.Frame(notebook)
+    notebook.add(page2, text="Live Monitoring")
+
+    page3 = ttk.Frame(notebook)
+    notebook.add(page3, text="File Saving")
+
+    tk.Label(page1, text="Enter Camera Index:").grid(row=0, column=0, padx=10, pady=10)
+    camera_index_entry = tk.Entry(page1)
+    camera_index_entry.grid(row=0, column=1)
+
+    tk.Button(page1, text="Next", command=on_next_page1).grid(row=1, columnspan=2, pady=10)
+
+    tk.Label(page2, text="Enter Red Value Change:").grid(row=0, column=0, padx=10, pady=10)
+    red_value_entry = tk.Entry(page2)
+    red_value_entry.grid(row=0, column=1)
+
+    tk.Label(page2, text="Enter Green Value Change:").grid(row=1, column=0, padx=10, pady=10)
+    green_value_entry = tk.Entry(page2)
+    green_value_entry.grid(row=1, column=1)
+
+    tk.Label(page2, text="Enter Blue Value Change:").grid(row=2, column=0, padx=10, pady=10)
+    blue_value_entry = tk.Entry(page2)
+    blue_value_entry.grid(row=2, column=1)
+
+    tk.Button(page2, text="Next", command=on_next_page2).grid(row=3, columnspan=2, pady=10)
+
+    tk.Label(page3, text="Select Output Files:").grid(row=0, column=0, padx=10, pady=10)
+
+    tk.Button(page3, text="Save Files", command=save_files).grid(row=1, columnspan=2, pady=10)
+
+    root.mainloop()
+
