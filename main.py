@@ -11,9 +11,6 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 import pymsteams
 
-
-warning_sign_length = 60
-color_detection_time = 1
 font = cv2.FONT_HERSHEY_SIMPLEX
 rectangle_color = (0, 0, 0)
 thickness = 3
@@ -21,23 +18,17 @@ webhook_url = ("https://azcollaboration.webhook.office.com/webhookb2/b54ccbde-81
                "d9ac-422f-ad06-cc4eb4214314/IncomingWebhook/d3f21f8d0a94461fa20ec6a31e2aa956/1f1eb231-d47e-41ab-8454-"
                "f4fdf14f73b5/V24CYESB-U5yYFccXnpfXGZZ7cmqd0OewLRWOQOFvOlnw1")
 
-start = None
-end = None
-camera_index = None
-red_ui = None
-blue_ui = None
-green_ui = None
-color_df = None
-colors_per_second_df = None
-color_change_df = None
-
+start = end = None
+camera_index = warning_sign_length = color_detection_time = None
+red_value = blue_value = green_value = None
+color_df = colors_per_second_df = color_change_df = None
+output_memory_file = io.BytesIO()
 
 
 def define_roi(camera_index):
     # Camera dimensions
     vid = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
 
-    # Region of interest variables
     drawing = False
 
     # This detects mouse movements/inputs for the region of interest (ROI).
@@ -83,8 +74,8 @@ def define_roi(camera_index):
 
 
 def live_monitoring(camera_index):
-    global start, end, rectangle_color, thickness, color_df, colors_per_second_df, color_change_df, run_third
-    user_inputs = [red_ui, green_ui, blue_ui]
+    global start, end, rectangle_color, thickness, color_df, colors_per_second_df, color_change_df, output_memory_file
+    user_inputs = [red_value, green_value, blue_value]
     vid = cv2.VideoCapture(camera_index, cv2.CAP_DSHOW)
     fps = int(vid.get(cv2.CAP_PROP_FPS))
     width = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH))
@@ -103,7 +94,6 @@ def live_monitoring(camera_index):
     warning = False
 
     # Video saving feature
-    output_memory_file = io.BytesIO()
     output = av.open(output_memory_file, 'w', format="mp4")
     stream = output.add_stream('h264', fps)
     stream.width = width
@@ -122,9 +112,10 @@ def live_monitoring(camera_index):
     start_time = time.time()
 
     while True:
-        bool, frame = vid.read()
-        if not bool:
+        success, frame = vid.read()
+        if not success:
             continue
+
         end_time = time.time()
         time_diff = end_time - start_time
 
@@ -151,8 +142,11 @@ def live_monitoring(camera_index):
                     color_change_data.append(data)
                     card = pymsteams.connectorcard(webhook_url)
                     message = (
-                        f'Color change at {current_time} and {time.time() - rxn_start_time} seconds into reaction.'
-                        f'\n Red delta: {color_diff[0]}, Green delta: {color_diff[1]}, Blue delta: {color_diff[2]}')
+                        f"""Color change at {current_time} and {time.time() - rxn_start_time} seconds into reaction. 
+                            Red delta: {color_diff[0]}. 
+                            Green delta: {color_diff[1]}. 
+                            Blue delta: {color_diff[2]}. 
+                            """)
                     card.text(message)
                     assert card.send()
                     break
@@ -245,9 +239,6 @@ def live_monitoring(camera_index):
     cv2.destroyAllWindows()
     plt.close()
 
-    with open("output.mp4", "wb") as f:
-        f.write(output_memory_file.getbuffer())
-
     color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue', 'Current time: Date / HH:MM:SS'])
     colors_per_second_df = pd.DataFrame(colors_per_second, columns=['Red', 'Green', 'Blue',
                                                                     'Current time: Date / HH:MM:SS'])
@@ -265,24 +256,22 @@ def live_monitoring(camera_index):
     #                                         'Colors per Second Table Row  Number of note',
     #                                         'Current time: Date / HH:MM:SS'])
 
-def on_next_page1():
-    global camera_index
+def next_page1():
+    global camera_index, warning_sign_length, color_detection_time
     camera_index = int(camera_index_entry.get())
+    warning_sign_length = int(warning_sign_length_entry.get())
+    color_detection_time = int(detection_time_entry.get())
 
     notebook.select(page2)
 
     webcam_thread = threading.Thread(target=define_roi, args=(camera_index,))
     webcam_thread.start()
 
-
-def on_next_page2():
+def next_page2():
+    global red_value, green_value, blue_value
     red_value = int(red_value_entry.get())
     green_value = int(green_value_entry.get())
     blue_value = int(blue_value_entry.get())
-    global red_ui, green_ui, blue_ui
-    red_ui = red_value
-    green_ui = green_value
-    blue_ui = blue_value
 
     notebook.select(page3)
 
@@ -307,6 +296,13 @@ def save_files():
     if color_change_file:
         color_change_df.to_csv(color_change_file, mode='w', index=False)
 
+    output_video = filedialog.asksaveasfilename(defaultextension=".mp4", filetypes=[("MP4 files", "*.mp4")],
+                                                     title="Save Video Output")
+    if output_video:
+        with open(output_video, "wb") as f:
+            global output_memory_file
+            f.write(output_memory_file.getbuffer())
+
 if __name__ == '__main__':
     root = tk.Tk()
     root.title("Webcam Process")
@@ -323,29 +319,36 @@ if __name__ == '__main__':
     page3 = ttk.Frame(notebook)
     notebook.add(page3, text="File Saving")
 
-    tk.Label(page1, text="Enter Camera Index:").grid(row=0, column=0, padx=10, pady=10)
+    tk.Label(page1, text="Camera Index:").grid(row=0, column=0, padx=10, pady=10)
     camera_index_entry = tk.Entry(page1)
     camera_index_entry.grid(row=0, column=1)
 
-    tk.Button(page1, text="Next", command=on_next_page1).grid(row=1, columnspan=2, pady=10)
+    tk.Label(page1, text="Time Elapsed per Color Check (seconds):").grid(row=1, column=0, padx=10, pady=10)
+    detection_time_entry = tk.Entry(page1)
+    detection_time_entry.grid(row=1, column=1)
 
-    tk.Label(page2, text="Enter Red Value Change:").grid(row=0, column=0, padx=10, pady=10)
+    tk.Label(page1, text="Warning Sign Length (frames):").grid(row=2, column=0, padx=10, pady=10)
+    warning_sign_length_entry = tk.Entry(page1)
+    warning_sign_length_entry.grid(row=2, column=1)
+
+    tk.Button(page1, text="Next", command=next_page1).grid(row=3, columnspan=2, pady=10)
+
+    tk.Label(page2, text="Red Value Change:").grid(row=0, column=0, padx=10, pady=10)
     red_value_entry = tk.Entry(page2)
     red_value_entry.grid(row=0, column=1)
 
-    tk.Label(page2, text="Enter Green Value Change:").grid(row=1, column=0, padx=10, pady=10)
+    tk.Label(page2, text="Green Value Change:").grid(row=1, column=0, padx=10, pady=10)
     green_value_entry = tk.Entry(page2)
     green_value_entry.grid(row=1, column=1)
 
-    tk.Label(page2, text="Enter Blue Value Change:").grid(row=2, column=0, padx=10, pady=10)
+    tk.Label(page2, text="Blue Value Change:").grid(row=2, column=0, padx=10, pady=10)
     blue_value_entry = tk.Entry(page2)
     blue_value_entry.grid(row=2, column=1)
 
-    tk.Button(page2, text="Next", command=on_next_page2).grid(row=3, columnspan=2, pady=10)
+    tk.Button(page2, text="Next", command=next_page2).grid(row=3, columnspan=2, pady=10)
 
     tk.Label(page3, text="Select Output Files:").grid(row=0, column=0, padx=10, pady=10)
 
     tk.Button(page3, text="Save Files", command=save_files).grid(row=1, columnspan=2, pady=10)
 
     root.mainloop()
-
