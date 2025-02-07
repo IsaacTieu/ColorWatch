@@ -10,6 +10,7 @@ import time
 import tkinter as tk
 from tkinter import ttk, filedialog
 import pymsteams
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 rectangle_color = (0, 0, 0)
@@ -72,6 +73,11 @@ def define_roi(camera_index):
     if not start and not end:
         raise ValueError('No Region of Interest input')
 
+fig, ax = plt.subplots(1, 3, figsize=(6, 2))
+x_data = []
+red_plot = []
+green_plot = []
+blue_plot = []
 
 def live_monitoring(camera_index):
     global start, end, rectangle_color, thickness, color_df, colors_per_second_df, color_change_df, output_memory_file
@@ -101,13 +107,6 @@ def live_monitoring(camera_index):
     stream.pix_fmt = 'yuv420p'
     stream.options = {'crf': '17'}  # Lower crf = better quality & more file space.
 
-    # Live plots
-    fig, ax = plt.subplots(1, 3, figsize=(6, 2))
-    x_data = []
-    red_plot = []
-    green_plot = []
-    blue_plot = []
-    x_axis_counter = 0
     rxn_start_time = time.time()
     start_time = time.time()
 
@@ -198,30 +197,18 @@ def live_monitoring(camera_index):
         packet = stream.encode(image)
         output.mux(packet)  # Write the encoded frame to MP4 file.
 
-        # Live data visualization
-        x_data.append(x_axis_counter)
-        x_axis_counter += 1
+        x_data.append(len(x_data))
         red_plot.append(frame_average_color[0])
         green_plot.append(frame_average_color[1])
         blue_plot.append(frame_average_color[2])
-
-        ax[0].clear()
-        ax[1].clear()
-        ax[2].clear()
 
         ax[0].plot(x_data, red_plot, color='r', label='Red')
         ax[1].plot(x_data, green_plot, color='g', label='Green')
         ax[2].plot(x_data, blue_plot, color='b', label='Blue')
 
-        ax[0].legend()
-        ax[1].legend()
-        ax[2].legend()
-
-        plt.draw()
-        plt.pause(0.01)
+        canvas.draw()
 
         cv2.imshow("Live webcam video", frame)
-        plt.show(block=False)
 
         # Press the video window and then 'q' to quit and move on.
         # MAKE SURE NUMLOCK IS TURNED ON (number pad is locked)
@@ -237,7 +224,6 @@ def live_monitoring(camera_index):
     output.mux(packet)
     output.close()
     cv2.destroyAllWindows()
-    plt.close()
 
     color_df = pd.DataFrame(colors, columns=['Red', 'Green', 'Blue', 'Current time: Date / HH:MM:SS'])
     colors_per_second_df = pd.DataFrame(colors_per_second, columns=['Red', 'Green', 'Blue',
@@ -346,6 +332,10 @@ if __name__ == '__main__':
     tk.Label(page2, text="Blue Value Change:").grid(row=2, column=0, padx=10, pady=10)
     blue_value_entry = tk.Entry(page2)
     blue_value_entry.grid(row=2, column=1)
+
+    canvas = FigureCanvasTkAgg(fig, master=root)
+    canvas_widget = canvas.get_tk_widget()
+    canvas_widget.pack()
 
     tk.Button(page2, text="Start Live Monitoring", command=next_page2).grid(row=3, columnspan=2, pady=10)
 
