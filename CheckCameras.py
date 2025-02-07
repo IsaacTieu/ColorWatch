@@ -1,9 +1,9 @@
 # The script below checks available webcams for openCV to video capture.
 # The numbers it prints out are possibilities for the parameter for the cv2.VideoCapture() function.
+# There is a lot of variability, but typically, the guidelines below run true.
 # If on a laptop, the parameter '0' refers to the default laptop webcam.
 # If the webcam is connected to the USB port on the left side, the parameter is '1'.
 # If the webcam is connected to the USB port on the right side, the parameter is '2'.
-# The script takes a while to run since VideoCapture is being run multiple times.
 
 import cv2
 
