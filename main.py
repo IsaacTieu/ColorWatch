@@ -61,7 +61,7 @@ def define_roi(camera_index):
         cv2.imshow("rectangle", image)
 
         # Press the video window and then 'q' to quit and move on.
-        # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
+        # MAKE SURE NUMLOCK IS TURNED ON (number pad is locked)
         key = cv2.waitKey(1)
         if key & 0xFF == ord('q'):
             break
@@ -122,10 +122,10 @@ def live_monitoring(camera_index):
         # This section detects change in color based on user input and displays a warning sign.
         if frame_counter == 1:
             prev_color = colors[-1]
-        # The warning sign will be on for 90 frames (3 seconds).
+        # The warning sign will be on for warning_sign_length (frames).
         if warning_counter == warning_sign_length:
             warning = False
-        # Checks for color change every 31st frame (approximately every second) and then resets.
+        # Checks for color change every color_detection_time seconds.
         if time_diff >= color_detection_time:
             start_time = end_time
             frame_counter = 0
@@ -223,8 +223,8 @@ def live_monitoring(camera_index):
         cv2.imshow("Live webcam video", frame)
         plt.show(block=False)
 
-        # Press the video window and then 'q' to quit and export the color data
-        # MAKE SURE NUMLOCK IS TURNED ON (can't press the number keys)
+        # Press the video window and then 'q' to quit and move on.
+        # MAKE SURE NUMLOCK IS TURNED ON (number pad is locked)
         key = cv2.waitKey(1)
         # if key == ord('u'):
         #     current_time = datetime.datetime.now()
@@ -347,7 +347,7 @@ if __name__ == '__main__':
 
     tk.Button(page2, text="Next", command=next_page2).grid(row=3, columnspan=2, pady=10)
 
-    tk.Label(page3, text="Select Output Files:").grid(row=0, column=0, padx=10, pady=10)
+    tk.Label(page3, text="File Saving:").grid(row=0, column=0, padx=10, pady=10)
 
     tk.Button(page3, text="Save Files", command=save_files).grid(row=1, columnspan=2, pady=10)
 
