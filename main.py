@@ -262,7 +262,8 @@ def next_page1():
     warning_sign_length = int(warning_sign_length_entry.get())
     color_detection_time = int(detection_time_entry.get())
 
-    notebook.select(page2)
+    #notebook.select(page2)
+    notebook.tab(0, state="disabled")
 
     webcam_thread = threading.Thread(target=define_roi, args=(camera_index,))
     webcam_thread.start()
@@ -273,7 +274,8 @@ def next_page2():
     green_value = int(green_value_entry.get())
     blue_value = int(blue_value_entry.get())
 
-    notebook.select(page3)
+    #notebook.select(page3)
+    notebook.tab(1, state="disabled")
 
     live_thread = threading.Thread(target=live_monitoring, args=(camera_index,))
     live_thread.start()
@@ -331,7 +333,7 @@ if __name__ == '__main__':
     warning_sign_length_entry = tk.Entry(page1)
     warning_sign_length_entry.grid(row=2, column=1)
 
-    tk.Button(page1, text="Next", command=next_page1).grid(row=3, columnspan=2, pady=10)
+    tk.Button(page1, text="Select Region of Interest", command=next_page1).grid(row=3, columnspan=2, pady=10)
 
     tk.Label(page2, text="Red Value Change:").grid(row=0, column=0, padx=10, pady=10)
     red_value_entry = tk.Entry(page2)
@@ -345,7 +347,7 @@ if __name__ == '__main__':
     blue_value_entry = tk.Entry(page2)
     blue_value_entry.grid(row=2, column=1)
 
-    tk.Button(page2, text="Next", command=next_page2).grid(row=3, columnspan=2, pady=10)
+    tk.Button(page2, text="Start Live Monitoring", command=next_page2).grid(row=3, columnspan=2, pady=10)
 
     tk.Label(page3, text="File Saving:").grid(row=0, column=0, padx=10, pady=10)
 
