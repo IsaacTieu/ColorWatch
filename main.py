@@ -2,21 +2,20 @@ import datetime
 import av
 import io
 import cv2
+import threading
+import time
+import pymsteams
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import threading
-import time
 import tkinter as tk
 from tkinter import ttk, filedialog
-import pymsteams
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 rectangle_color = (0, 0, 0)
 thickness = 3
 webhook_url = None
-
 start = end = None
 camera_index = warning_sign_length = color_detection_time = None
 red_value = blue_value = green_value = None
@@ -28,7 +27,6 @@ x_data = []
 red_plot = []
 green_plot = []
 blue_plot = []
-
 
 def define_roi(camera_index):
     # Camera dimensions
@@ -253,8 +251,6 @@ def next_page1():
     else:
         webhook_url = webhook_entry.get()
 
-
-    #notebook.select(page2)
     notebook.tab(0, state="disabled")
 
     webcam_thread = threading.Thread(target=define_roi, args=(camera_index,))
@@ -266,12 +262,10 @@ def next_page2():
     green_value = int(green_value_entry.get())
     blue_value = int(blue_value_entry.get())
 
-    #notebook.select(page3)
     notebook.tab(1, state="disabled")
 
     live_thread = threading.Thread(target=live_monitoring, args=(camera_index,))
     live_thread.start()
-
 
 def save_files():
     color_file = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV files", "*.csv")],
