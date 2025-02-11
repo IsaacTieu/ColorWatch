@@ -157,7 +157,7 @@ def live_monitoring(camera_index):
             (text_width, text_height), _ = cv2.getTextSize(text, font, 1, 3)
             x = (width - text_width) // 2
             # y = height // 8 + text_height // 2
-            height_diff = start[1] - 100
+            height_diff = start[1] - 200 + text_height
             y = height_diff if height_diff > 0 else height + height_diff
             frame = cv2.putText(frame, text, (x, y), font, 1,
                                 (255, 0, 0), 3)
