@@ -15,15 +15,19 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 font = cv2.FONT_HERSHEY_SIMPLEX
 rectangle_color = (0, 0, 0)
 thickness = 3
-webhook_url = ("https://azcollaboration.webhook.office.com/webhookb2/b54ccbde-8107-419e-9cb7-60692f9c3e79@af8e89a3-"
-               "d9ac-422f-ad06-cc4eb4214314/IncomingWebhook/d3f21f8d0a94461fa20ec6a31e2aa956/1f1eb231-d47e-41ab-8454-"
-               "f4fdf14f73b5/V24CYESB-U5yYFccXnpfXGZZ7cmqd0OewLRWOQOFvOlnw1")
+webhook_url = None
 
 start = end = None
 camera_index = warning_sign_length = color_detection_time = None
 red_value = blue_value = green_value = None
 color_df = colors_per_second_df = color_change_df = None
 output_memory_file = io.BytesIO()
+
+fig, ax = plt.subplots(1, 3, figsize=(6, 2))
+x_data = []
+red_plot = []
+green_plot = []
+blue_plot = []
 
 
 def define_roi(camera_index):
@@ -72,12 +76,6 @@ def define_roi(camera_index):
 
     if not start and not end:
         raise ValueError('No Region of Interest input')
-
-fig, ax = plt.subplots(1, 3, figsize=(6, 2))
-x_data = []
-red_plot = []
-green_plot = []
-blue_plot = []
 
 def live_monitoring(camera_index):
     global start, end, rectangle_color, thickness, color_df, colors_per_second_df, color_change_df, output_memory_file
@@ -139,16 +137,17 @@ def live_monitoring(camera_index):
                             len(colors) + 1, len(colors_per_second) + 1, i,
                             test_color[0], test_color[1], test_color[2])
                     color_change_data.append(data)
-                    card = pymsteams.connectorcard(webhook_url)
-                    message = (
-                        f"""Color change at {current_time} and {time.time() - rxn_start_time} seconds into reaction. 
-                            Red delta: {color_diff[0]}. 
-                            Green delta: {color_diff[1]}. 
-                            Blue delta: {color_diff[2]}. 
-                            """)
-                    card.text(message)
-                    assert card.send()
-                    break
+                    if webhook_url:
+                        card = pymsteams.connectorcard(webhook_url)
+                        message = (
+                            f"""Color change at {current_time} and {time.time() - rxn_start_time} seconds into reaction. 
+                                Red delta: {color_diff[0]}. 
+                                Green delta: {color_diff[1]}. 
+                                Blue delta: {color_diff[2]}. 
+                                """)
+                        card.text(message)
+                        assert card.send()
+                        break
 
         # If a color change is detected, a warning message is displayed.
         if warning:
@@ -243,10 +242,17 @@ def live_monitoring(camera_index):
     #                                         'Current time: Date / HH:MM:SS'])
 
 def next_page1():
-    global camera_index, warning_sign_length, color_detection_time
+    global camera_index, warning_sign_length, color_detection_time, webhook_url
     camera_index = int(camera_index_entry.get())
     warning_sign_length = int(warning_sign_length_entry.get())
     color_detection_time = int(detection_time_entry.get())
+    if not webhook_entry.get():
+        webhook_url = ("https://azcollaboration.webhook.office.com/webhookb2/b54ccbde-8107-419e-9cb7-60692f9c3e79@af8e89a3-"
+               "d9ac-422f-ad06-cc4eb4214314/IncomingWebhook/d3f21f8d0a94461fa20ec6a31e2aa956/1f1eb231-d47e-41ab-8454-"
+               "f4fdf14f73b5/V24CYESB-U5yYFccXnpfXGZZ7cmqd0OewLRWOQOFvOlnw1")
+    else:
+        webhook_url = webhook_entry.get()
+
 
     #notebook.select(page2)
     notebook.tab(0, state="disabled")
@@ -319,7 +325,11 @@ if __name__ == '__main__':
     warning_sign_length_entry = tk.Entry(page1)
     warning_sign_length_entry.grid(row=2, column=1)
 
-    tk.Button(page1, text="Select Region of Interest", command=next_page1).grid(row=3, columnspan=2, pady=10)
+    tk.Label(page1, text="Webhook Url (don't enter anything for default):").grid(row=3, column=0, padx=10, pady=10)
+    webhook_entry = tk.Entry(page1)
+    webhook_entry.grid(row=3, column=1)
+
+    tk.Button(page1, text="Select Region of Interest", command=next_page1).grid(row=4, columnspan=2, pady=10)
 
     tk.Label(page2, text="Red Value Change:").grid(row=0, column=0, padx=10, pady=10)
     red_value_entry = tk.Entry(page2)
