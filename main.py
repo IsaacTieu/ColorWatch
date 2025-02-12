@@ -323,7 +323,7 @@ if __name__ == '__main__':
     webhook_entry = tk.Entry(page1)
     webhook_entry.grid(row=3, column=1)
 
-    tk.Button(page1, text="Select Region of Interest", command=next_page1).grid(row=4, columnspan=2, pady=10)
+    tk.Button(page1, text="Select Region of Interest (ROI)", command=next_page1).grid(row=4, columnspan=2, pady=10)
 
     tk.Label(page2, text="Red Value Change:").grid(row=0, column=0, padx=10, pady=10)
     red_value_entry = tk.Entry(page2)
