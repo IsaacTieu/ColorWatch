@@ -12,6 +12,7 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
+# Intialize variables
 font = cv2.FONT_HERSHEY_SIMPLEX
 rectangle_color = (0, 0, 0)
 thickness = 3
@@ -248,6 +249,8 @@ def next_page1():
         webhook_url = ("https://azcollaboration.webhook.office.com/webhookb2/b54ccbde-8107-419e-9cb7-60692f9c3e79@af8e89a3-"
                "d9ac-422f-ad06-cc4eb4214314/IncomingWebhook/d3f21f8d0a94461fa20ec6a31e2aa956/1f1eb231-d47e-41ab-8454-"
                "f4fdf14f73b5/V24CYESB-U5yYFccXnpfXGZZ7cmqd0OewLRWOQOFvOlnw1")
+    elif webhook_entry.get() == 'false':
+        webhook_url = None 
     else:
         webhook_url = webhook_entry.get()
 
@@ -319,7 +322,7 @@ if __name__ == '__main__':
     warning_sign_length_entry = tk.Entry(page1)
     warning_sign_length_entry.grid(row=2, column=1)
 
-    tk.Label(page1, text="Webhook Url (don't enter anything for default):").grid(row=3, column=0, padx=10, pady=10)
+    tk.Label(page1, text="Webhook Url (don't enter anything for default, enter 'false' for no Teams alert):").grid(row=3, column=0, padx=10, pady=10)
     webhook_entry = tk.Entry(page1)
     webhook_entry.grid(row=3, column=1)
 
