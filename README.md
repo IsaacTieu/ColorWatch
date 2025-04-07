@@ -23,6 +23,11 @@ This project is measures color changes in a user-defined region of interest (ROI
 
 ## 🛠️ Installation
 
+### 1. Install the executable
+- [Zenodo Link](#)
+
+# OR
+
 ### 1. Clone the Repository 
     git clone https://github.com/IsaacTieu/color.git
 
@@ -37,7 +42,7 @@ Create a virtual environment using your preferred tool (e.g., `venv`, `conda`). 
 
 ## 📥 Instructions (later put pictures in here and mention what each parameter is for and what to enter
 
-### Model Files
+### Executable file download
 Download the pre-trained model files from the following link and place them in the current working directory (CWD):
 - [Model Files Zenodo Link](#)
 
