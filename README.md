@@ -61,12 +61,10 @@ The scripts can either be run with the executable, in an IDE or through the comm
 
 ### Run Through an IDE
 1. Open `main.py` in your preferred IDE.
-2. Adjust `camera_index` to match the external webcam. Typically, it is `1`, but can vary.
 
 ### Run Through Command Line
 
-    python3 main.py xxxxxxxxxx
-
+    python main.py
 
 ---
 
