@@ -103,4 +103,3 @@ dependencies:
       - pymsteams==0.2.5
       - requests==2.32.3
       - urllib3==2.3.0
-prefix: C:\Users\kxqg858\AppData\Local\miniconda3\envs\colorenv
