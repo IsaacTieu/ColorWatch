@@ -47,7 +47,7 @@ The scripts can either be run with the executable, in an IDE or through the comm
 2. This takes ~30 seconds - 1 min to load.
 
 ### Run Through an IDE
-1. Open `main.py` in your preferred IDE.
+1. Open `main.py` in your preferred IDE and press the run button.
 
 ### Run Through Command Line
 
