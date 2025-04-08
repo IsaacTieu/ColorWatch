@@ -24,7 +24,7 @@ This project is measures color changes in a user-defined region of interest (ROI
 ## 🛠️ Installation
 
 ### 1. Install the executable
-- [Zenodo Link](#)
+- [GitHub Release](https://github.com/IsaacTieu/color/releases/tag/v1.0)
 
 # OR
 
