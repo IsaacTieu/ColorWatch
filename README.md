@@ -51,7 +51,7 @@ The scripts can either be run with the executable, in an IDE or through the comm
 
 ### Run Through Command Line
 
-    python main.py
+    python src/main.py
 
 ---
 
@@ -96,6 +96,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 ## 📅 Last Updated
-This README was last updated on **April 07, 2025**.
+This README was last updated on **April 10, 2025**.
 
 
