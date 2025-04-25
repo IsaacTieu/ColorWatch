@@ -245,11 +245,7 @@ def next_page1():
     camera_index = int(camera_index_entry.get())
     warning_sign_length = int(warning_sign_length_entry.get())
     color_detection_time = int(detection_time_entry.get())
-    if not webhook_entry.get():
-        webhook_url = ("https://azcollaboration.webhook.office.com/webhookb2/b54ccbde-8107-419e-9cb7-60692f9c3e79@af8e89a3-"
-               "d9ac-422f-ad06-cc4eb4214314/IncomingWebhook/d3f21f8d0a94461fa20ec6a31e2aa956/1f1eb231-d47e-41ab-8454-"
-               "f4fdf14f73b5/V24CYESB-U5yYFccXnpfXGZZ7cmqd0OewLRWOQOFvOlnw1")
-    elif webhook_entry.get() == 'false':
+    if webhook_entry.get() == 'false':
         webhook_url = None 
     else:
         webhook_url = webhook_entry.get()
