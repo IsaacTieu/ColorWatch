@@ -68,7 +68,7 @@ The scripts can either be run with the executable, in an IDE or through the comm
 - `Warning Sign Length (frames)`: Duration of a warning sign being displayed on screen in frames.  
   Example: `30` for a message to be displayed for 30 frames. For a 30 frames per second webcam, this would result in the warning sign lasting for 1 second.
 
-- `Webhook URL`: Specifies the webhook to send Microsoft Teams notifications to.  
+- `Webhook URL`: Specifies the webhook to send Microsoft Teams notifications to. Webhooks can be created with this [tutorial.](https://www.datacamp.com/tutorial/how-to-send-microsoft-teams-messages-with-python)  
   Example: `false` for no Microsoft Teams message to be sent.
 
 - `Select Region of Interest (ROI)`: Press this button to select a ROI. This can be done by holding down left click on the mouse and dragging across the screen.
