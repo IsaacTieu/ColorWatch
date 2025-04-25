@@ -1,4 +1,4 @@
-# Project Title: xxxxxxx
+# Project Title: ColorWatch
 
 ## 📝 Description
 This project is measures color changes in a user-defined region of interest (ROI) with an easy-to-use graphical user interface (GUI).
@@ -96,6 +96,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 ## 📅 Last Updated
-This README was last updated on **April 10, 2025**.
+This README was last updated on **April 25, 2025**.
 
 
