@@ -1,7 +1,7 @@
-# Project Title: ColorWatch
+# ColorWatch
 
 ## 📝 Description
-This project is measures color changes in a user-defined region of interest (ROI) with an easy-to-use graphical user interface (GUI).
+This project is measures color changes in a user-defined region of interest (ROI) with an easy-to-use graphical user interface (GUI). ColorWatch was initially devloped to monitor color changes in coupling reactions, but it can be applied to anything in need of color monitoring.
 
 ---
 
