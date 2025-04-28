@@ -17,3 +17,7 @@ def check_cameras():
         if cap.isOpened():
             print(i)
             cap.release()
+
+
+if __name__ == "__main__":
+    check_cameras()
