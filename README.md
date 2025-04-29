@@ -71,14 +71,14 @@ The scripts can either be run with the executable, in an IDE or through the comm
 - `Webhook URL`: Specifies the webhook to send Microsoft Teams notifications to. Webhooks can be created with this [tutorial.](https://www.datacamp.com/tutorial/how-to-send-microsoft-teams-messages-with-python)  
   Example: `false` for no Microsoft Teams message to be sent.
 
-- `Select Region of Interest (ROI)`: Press this button to select a ROI. This can be done by holding down left click on the mouse and dragging across the screen.
+- `Select Region of Interest (ROI)`: Press this button to select a ROI. This can be done by holding down left click on the mouse and dragging across the screen. Once finished, press and hold `q` to exit.
 
 ### Second Screen
 
 - `(R/G/B) Value Change`: This represents the R/G/B value change to be detected for each value. These values range from 0-255, so smaller values will detect smaller changes.  
   Example: `256' for no R/G/B value change to be detected.
 
-- `Start Live Monitoring`: Press this button to start the live monitoring.
+- `Start Live Monitoring`: Press this button to start the live monitoring. Once finished, press and hold `q` to exit.
 
 ### Third Screen
 
@@ -96,6 +96,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 ## 📅 Last Updated
-This README was last updated on **April 25, 2025**.
+This README was last updated on **April 29, 2025**.
 
 
